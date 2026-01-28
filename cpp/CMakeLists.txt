@@ -27,47 +27,34 @@ include(sanitizers)
 project(tensorrt_llm LANGUAGES CXX)
 
 # Build options
-option(BUILD_PYT "Build in PyTorch TorchScript class mode" ON)
 set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
-option(BUILD_BENCHMARKS "Build benchmarks" ON)
-option(BUILD_DEEP_EP "Build the Deep EP module" ON)
-option(BUILD_DEEP_GEMM "Build the DeepGEMM module" ON)
-option(BUILD_FLASH_MLA "Build the FlashMLA module" ON)
+set(BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
+set(BUILD_MICRO_BENCHMARKS OFF CACHE BOOL "" FORCE)
+set(BUILD_DEEP_EP OFF CACHE BOOL "" FORCE)
+set(BUILD_DEEP_GEMM OFF CACHE BOOL "" FORCE)
+set(BUILD_FLASH_MLA OFF CACHE BOOL "" FORCE)
+set(FAST_BUILD ON CACHE BOOL "" FORCE)
+set(FAST_MATH ON CACHE BOOL "" FORCE)
+set(ENABLE_MULTI_DEVICE OFF CACHE BOOL "" FORCE)
+set(ENABLE_UCX OFF CACHE BOOL "" FORCE)
+set(ENABLE_NVSHMEM OFF CACHE BOOL "" FORCE)
+set(ENABLE_CUBLASLT_FP4_GEMM OFF CACHE BOOL "" FORCE)
+set(USING_OSS_CUTLASS_LOW_LATENCY_GEMM OFF CACHE BOOL "" FORCE)
+set(USING_OSS_CUTLASS_FP4_GEMM OFF CACHE BOOL "" FORCE)
+set(USING_OSS_CUTLASS_MOE_GEMM OFF CACHE BOOL "" FORCE)
+set(USING_OSS_CUTLASS_ALLREDUCE_GEMM OFF CACHE BOOL "" FORCE)
+
+option(BUILD_PYT "Build in PyTorch TorchScript class mode" ON)
 option(BUILD_MICRO_BENCHMARKS "Build C++ micro benchmarks" OFF)
 option(NVTX_DISABLE "Disable all NVTX features" ON)
 option(WARNING_IS_ERROR "Treat all warnings as errors" OFF)
-option(FAST_BUILD "Skip compiling some kernels to accelerate compiling" OFF)
-option(FAST_MATH "Compiling in fast math mode" OFF)
 option(INDEX_RANGE_CHECK "Compiling with index range checks" OFF)
 option(COMPRESS_FATBIN "Compress everything in fatbin" ON)
 option(TIMING_NVCC "Enable nvcc build timing report" OFF)
-option(ENABLE_MULTI_DEVICE
-       "Enable building with multi device support (requires NCCL, MPI,...)" ON)
-option(ENABLE_UCX "Enable building with UCX (Uniform Communication X) support"
-       ON)
 option(NVRTC_DYNAMIC_LINKING "Link against the dynamic NVRTC libraries" OFF)
 option(CUBLAS_DYNAMIC_LINKING
        "Link against the dynamic cublas/cublasLt libraries" ON)
 option(CURAND_DYNAMIC_LINKING "Link against the dynamic curand library" ON)
-
-option(ENABLE_NVSHMEM "Enable building with NVSHMEM support" OFF)
-option(USING_OSS_CUTLASS_LOW_LATENCY_GEMM
-       "Using open sourced Cutlass low latency gemm kernel" ON)
-option(USING_OSS_CUTLASS_FP4_GEMM "Using open sourced Cutlass fp4 gemm kernel"
-       ON)
-option(ENABLE_CUBLASLT_FP4_GEMM "Enable cuBLASLt FP4 GEMM support" ON)
-if(NOT ${CUDAToolkit_VERSION} VERSION_GREATER_EQUAL "12.8")
-  set(ENABLE_CUBLASLT_FP4_GEMM
-      OFF
-      CACHE BOOL "" FORCE)
-  message(
-    STATUS
-      "CUDA ${CUDAToolkit_VERSION} < 12.8: disabling ENABLE_CUBLASLT_FP4_GEMM")
-endif()
-option(USING_OSS_CUTLASS_MOE_GEMM "Using open sourced Cutlass moe gemm kernel"
-       ON)
-option(USING_OSS_CUTLASS_ALLREDUCE_GEMM
-       "Using open sourced Cutlass AR gemm kernel" ON)
 option(SKIP_SOFTMAX_STAT "Enable Statistics of Skip-Softmax" OFF)
 
 message(STATUS "ENABLE_NVSHMEM is ${ENABLE_NVSHMEM}")
