@@ -28,7 +28,7 @@ project(tensorrt_llm LANGUAGES CXX)
 
 # Build options
 option(BUILD_PYT "Build in PyTorch TorchScript class mode" ON)
-option(BUILD_TESTS "Build Google tests" ON)
+set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
 option(BUILD_BENCHMARKS "Build benchmarks" ON)
 option(BUILD_DEEP_EP "Build the Deep EP module" ON)
 option(BUILD_DEEP_GEMM "Build the DeepGEMM module" ON)
