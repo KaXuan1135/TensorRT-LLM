@@ -49,19 +49,19 @@ set(PLUGIN_CU_SOURCES)
 
 set(PLUGIN_LISTS
     bertAttentionPlugin
-    cpSplitPlugin
+    # cpSplitPlugin
     fusedLayernormPlugin
     gptAttentionCommon
     gptAttentionPlugin
     identityPlugin
     gemmPlugin
     gemmSwigluPlugin
-    fp8RowwiseGemmPlugin
+    # fp8RowwiseGemmPlugin
     smoothQuantGemmPlugin
-    fp4GemmPlugin
+    # fp4GemmPlugin
     quantizePerTokenPlugin
     quantizeTensorPlugin
-    quantizeToFP4Plugin
+    # quantizeToFP4Plugin
     layernormQuantizationPlugin
     rmsnormQuantizationPlugin
     weightOnlyGroupwiseQuantMatmulPlugin
@@ -69,9 +69,9 @@ set(PLUGIN_LISTS
     lookupPlugin
     loraPlugin
     doraPlugin
-    mixtureOfExperts
-    selectiveScanPlugin
-    mambaConv1dPlugin
+    # mixtureOfExperts
+    # selectiveScanPlugin
+    # mambaConv1dPlugin
     lruPlugin
     cumsumLastDimPlugin
     topkLastDimPlugin
@@ -80,7 +80,8 @@ set(PLUGIN_LISTS
     lowLatencyGemmSwigluPlugin
     qserveGemmPlugin
     cudaStreamPlugin
-    gemmAllReducePlugin)
+    # gemmAllReducePlugin
+)
 
 foreach(PLUGIN_ITER ${PLUGIN_LISTS})
   include_directories(${PLUGIN_ITER})

@@ -99,7 +99,10 @@ void cublas_fp4_gemm_caller(torch::Tensor& out, torch::Tensor const& a, torch::T
 
     // Set FP4 configuration based on output tensor dtype
     cudaDataType_t outType = getCudaDataType(out.scalar_type());
-    cublasWrapper->setFP4GemmConfig(outType);
+    printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+    __builtin_trap();
+    cublasWrapper->setFP8GemmConfig(outType);
+    // cublasWrapper->setFP4GemmConfig(outType);
 
     // Get workspace (reuse cached workspace for this device)
     auto const& workspace = getWorkspaceTensor(a.device());
@@ -143,11 +146,11 @@ void cublas_fp4_gemm_caller(torch::Tensor& out, torch::Tensor const& a, torch::T
     //   3. Passing dimensions as (n, m, k) instead of (m, n, k)
     //   4. Swapping scaling factors to match (b_sf_ptr, a_sf_ptr)
     // Note: beta is always 0 and is managed internally by BlockScaleGemm
-    cublasWrapper->BlockScaleGemm(CUBLAS_OP_T, CUBLAS_OP_N, n, m, k, b_ptr, k, // B matrix (swapped to first position)
-        a_ptr, k,                                                              // A matrix (swapped to second position)
-        out_ptr, n,                                                            // Output: C[m, n] in row-major
-        b_sf_ptr, a_sf_ptr,                                                    // Scaling factors (also swapped)
-        alpha_ptr);                                                            // Uses default algorithm (nullptr)
+    // cublasWrapper->BlockScaleGemm(CUBLAS_OP_T, CUBLAS_OP_N, n, m, k, b_ptr, k, // B matrix (swapped to first position)
+    //     a_ptr, k,                                                              // A matrix (swapped to second position)
+    //     out_ptr, n,                                                            // Output: C[m, n] in row-major
+    //     b_sf_ptr, a_sf_ptr,                                                    // Scaling factors (also swapped)
+    //     alpha_ptr);                                                            // Uses default algorithm (nullptr)
 }
 
 } // namespace
@@ -305,7 +308,11 @@ private:
                 ? CUDA_R_16F
                 : (mOutputDtype == at::ScalarType::BFloat16 ? CUDA_R_16BF : CUDA_R_32F);
 
-            cublasWrapper->setFP4GemmConfig(outType);
+            printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+            __builtin_trap();
+            cublasWrapper->setFP8GemmConfig(outType);
+
+            // cublasWrapper->setFP4GemmConfig(outType);
 
             // Create descriptors
             cublasWrapper->createDescriptors(CUBLAS_OP_T, CUBLAS_OP_N, n, m, k, k, k, n, 0);
@@ -380,7 +387,10 @@ private:
 
         // Set FP4 configuration with correct output type
         cudaDataType_t outType = getCudaDataType(output_dtype);
-        cublasWrapper->setFP4GemmConfig(outType);
+        printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+        __builtin_trap();
+        cublasWrapper->setFP8GemmConfig(outType);
+        // cublasWrapper->setFP4GemmConfig(outType);
 
         // Get workspace (reuse cached workspace for this device)
         auto const& workspace = getWorkspaceTensor(a.device());
@@ -417,13 +427,13 @@ private:
 
         // Use BlockScaleGemm with specified algorithm for autotuning
         // Note: beta is always 0 and is managed internally by BlockScaleGemm
-        cublasWrapper->BlockScaleGemm(CUBLAS_OP_T, CUBLAS_OP_N, n, m, k, b_ptr,
-            k,                  // B matrix (swapped to first position)
-            a_ptr, k,           // A matrix (swapped to second position)
-            out_ptr, n,         // Output: C[m, n] in row-major
-            b_sf_ptr, a_sf_ptr, // Scaling factors (also swapped)
-            alpha_ptr,          // Alpha
-            &algo);             // Use specified algorithm
+        // cublasWrapper->BlockScaleGemm(CUBLAS_OP_T, CUBLAS_OP_N, n, m, k, b_ptr,
+        //     k,                  // B matrix (swapped to first position)
+        //     a_ptr, k,           // A matrix (swapped to second position)
+        //     out_ptr, n,         // Output: C[m, n] in row-major
+        //     b_sf_ptr, a_sf_ptr, // Scaling factors (also swapped)
+        //     alpha_ptr,          // Alpha
+        //     &algo);             // Use specified algorithm
     }
 };
 

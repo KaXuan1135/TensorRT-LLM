@@ -23,7 +23,7 @@
 #include "tensorrt_llm/common/quantization.h"
 #include "tensorrt_llm/kernels/cutlass_kernels/fp8_blockscale_gemm/fp8_blockscale_gemm.h"
 #ifdef ENABLE_FP4
-#include <cuda_fp4.h>
+// #include <cuda_fp4.h>
 #endif
 #include <NvInferRuntime.h>
 #include <array>

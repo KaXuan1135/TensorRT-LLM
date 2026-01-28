@@ -23,7 +23,7 @@
 #include "tensorrt_llm/kernels/cutlass_kernels/fp8_blockscale_gemm/fp8_blockscale_gemm.h"
 #include <cstdint>
 #ifdef ENABLE_FP4
-#include <cuda_fp4.h>
+// #include <cuda_fp4.h>
 #endif
 #include "tensorrt_llm/common/config.h"
 #include <NvInferRuntime.h>
@@ -550,10 +550,14 @@ class CutlassMoeFCRunner : public CutlassMoeFCRunnerInterface
     using Self = CutlassMoeFCRunner<T, WeightType, OutputType, InputType, BackBoneType>;
 
 #if defined(ENABLE_BF16)
-    static constexpr bool use_wfp4a16
-        = std::is_same_v<WeightType, __nv_fp4_e2m1> && (std::is_same_v<T, half> || std::is_same_v<T, __nv_bfloat16>);
+    // static constexpr bool use_wfp4a16
+    //     = std::is_same_v<WeightType, __nv_fp4_e2m1> && (std::is_same_v<T, half> || std::is_same_v<T, __nv_bfloat16>);
+
+    static constexpr bool use_wfp4a16 = false;
+
 #else
-    static constexpr bool use_wfp4a16 = std::is_same_v<WeightType, __nv_fp4_e2m1> && std::is_same_v<T, half>;
+    static constexpr bool use_wfp4a16 = false;
+    // static constexpr bool use_wfp4a16 = std::is_same_v<WeightType, __nv_fp4_e2m1> && std::is_same_v<T, half>;
 #endif
 #if defined(ENABLE_FP8)
     static constexpr bool use_fp8 = (std::is_same_v<T, __nv_fp8_e4m3>
@@ -569,12 +573,18 @@ class CutlassMoeFCRunner : public CutlassMoeFCRunnerInterface
 #endif
     static constexpr bool use_w4_groupwise = use_w4afp8 || use_wfp4a16;
 #if defined(ENABLE_FP4)
-    static constexpr bool act_fp4 = std::is_same_v<T, __nv_fp4_e2m1>;
-    static constexpr bool weight_fp4 = std::is_same_v<WeightType, __nv_fp4_e2m1>;
-    static constexpr bool use_wfp4afp8 = std::is_same_v<T, __nv_fp8_e4m3> && weight_fp4;
-    static constexpr bool use_fp4 = act_fp4 && weight_fp4;
-    static_assert(!std::is_same_v<BackBoneType, __nv_fp4_e2m1>, "Current logic requires backbone type to be >=16-bits");
-    static_assert(!std::is_same_v<OutputType, __nv_fp4_e2m1>, "Current logic requires output type to be >=16-bits");
+    // static constexpr bool act_fp4 = std::is_same_v<T, __nv_fp4_e2m1>;
+    // static constexpr bool weight_fp4 = std::is_same_v<WeightType, __nv_fp4_e2m1>;
+    // static constexpr bool use_wfp4afp8 = std::is_same_v<T, __nv_fp8_e4m3> && weight_fp4;
+    // static constexpr bool use_fp4 = act_fp4 && weight_fp4;
+    // static_assert(!std::is_same_v<BackBoneType, __nv_fp4_e2m1>, "Current logic requires backbone type to be >=16-bits");
+    // static_assert(!std::is_same_v<OutputType, __nv_fp4_e2m1>, "Current logic requires output type to be >=16-bits");
+
+    static constexpr bool act_fp4 = false;
+    static constexpr bool weight_fp4 = false;
+    static constexpr bool use_wfp4afp8 = false;
+    static constexpr bool use_fp4 = false;
+
 #else
     static constexpr bool act_fp4 = false;
     static constexpr bool weight_fp4 = false;
@@ -966,16 +976,16 @@ public:
         mSM = common::getSMVersion();
 
         mScalingType = TmaWarpSpecializedGroupedGemmInput::FpXBlockScalingType::NONE;
-        if (dtype == nvinfer1::DataType::kFP8
-            && (wtype == nvinfer1::DataType::kFP4 || wtype == nvinfer1::DataType::kINT64))
-        {
-            mScalingType = TmaWarpSpecializedGroupedGemmInput::FpXBlockScalingType::MXFPX;
-        }
-        else if ((dtype == nvinfer1::DataType::kFP4 || dtype == nvinfer1::DataType::kINT64)
-            && (wtype == nvinfer1::DataType::kFP4 || wtype == nvinfer1::DataType::kINT64))
-        {
-            mScalingType = TmaWarpSpecializedGroupedGemmInput::FpXBlockScalingType::NVFP4;
-        }
+        // if (dtype == nvinfer1::DataType::kFP8
+        //     && (wtype == nvinfer1::DataType::kFP4 || wtype == nvinfer1::DataType::kINT64))
+        // {
+        //     mScalingType = TmaWarpSpecializedGroupedGemmInput::FpXBlockScalingType::MXFPX;
+        // }
+        // else if ((dtype == nvinfer1::DataType::kFP4 || dtype == nvinfer1::DataType::kINT64)
+        //     && (wtype == nvinfer1::DataType::kFP4 || wtype == nvinfer1::DataType::kINT64))
+        // {
+        //     mScalingType = TmaWarpSpecializedGroupedGemmInput::FpXBlockScalingType::NVFP4;
+        // }
     }
 
     void prepare(int num_tokens, char* workspace, void const* expert_weights, cudaStream_t stream);

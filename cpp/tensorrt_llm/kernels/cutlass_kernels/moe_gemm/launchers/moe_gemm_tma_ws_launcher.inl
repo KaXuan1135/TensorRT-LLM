@@ -50,7 +50,7 @@
 #include <cuda_fp16.h>
 // #include <cutlass/arch/arch.h>
 #ifdef ENABLE_FP4
-#include <cuda_fp4.h>
+// #include <cuda_fp4.h>
 #endif
 #include <cuda_fp8.h>
 #include <math.h>

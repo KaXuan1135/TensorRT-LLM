@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <cfloat>
 #include "cuda_runtime_api.h"
 #include "tensorrt_llm/common/config.h"
 #include <memory>

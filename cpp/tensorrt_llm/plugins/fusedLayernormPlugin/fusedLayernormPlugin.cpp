@@ -133,8 +133,11 @@ bool FusedLayernormPlugin::supportsFormatCombination(
     {
         if (mNeedQuantize)
         {
+            printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+            __builtin_trap();
+            return false;
             // fp4 quantized output -- fp4 padded tp int64
-            return (inOut[pos].type == nvinfer1::DataType::kFP4) && (inOut[pos].format == TensorFormat::kLINEAR);
+            // return (inOut[pos].type == nvinfer1::DataType::kFP4) && (inOut[pos].format == TensorFormat::kLINEAR);
         }
         return (inOut[pos].type == mType) && (inOut[pos].format == TensorFormat::kLINEAR);
     }
@@ -237,7 +240,10 @@ nvinfer1::DataType FusedLayernormPlugin::getOutputDataType(
         // Output 0 quantized output of layernorm - fp4 padded to int64
         if (mNeedQuantize)
         {
-            return nvinfer1::DataType::kFP4;
+            printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+            __builtin_trap();
+            return mType;
+            // return nvinfer1::DataType::kFP4;
         }
         return mType;
     }

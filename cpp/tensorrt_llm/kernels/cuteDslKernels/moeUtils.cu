@@ -23,7 +23,7 @@
 #include "tensorrt_llm/kernels/quantization.cuh"
 #include "tensorrt_llm/kernels/quantization.h"
 
-#include <cuda_fp4.h>
+// #include <cuda_fp4.h>
 #include <cute/numeric/numeric_types.hpp>
 
 TRTLLM_NAMESPACE_BEGIN

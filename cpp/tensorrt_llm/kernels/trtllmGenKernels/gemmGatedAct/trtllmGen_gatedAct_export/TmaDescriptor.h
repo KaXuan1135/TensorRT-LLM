@@ -62,20 +62,28 @@ inline CUtensorMap buildNdTmaDescriptor(tg::Dtype dtype, tg::MmaKind mmaKind, st
     }
     else if (dtype == tg::Dtype::E2m1)
     {
-        tmaDataFormat = CU_TENSOR_MAP_DATA_TYPE_16U4_ALIGN8B;
+        printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+        __builtin_trap();
+        // tmaDataFormat = CU_TENSOR_MAP_DATA_TYPE_16U4_ALIGN8B;
     }
     else if (dtype == tg::Dtype::MxE2m1)
     {
         if (mmaKind == tg::MmaKind::MxFp8Fp6Fp4)
         {
-            padMultiplier = 2;
-            tmaDataFormat = CU_TENSOR_MAP_DATA_TYPE_16U4_ALIGN16B;
+
+            printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+            __builtin_trap();
+            // padMultiplier = 2;
+            // tmaDataFormat = CU_TENSOR_MAP_DATA_TYPE_16U4_ALIGN16B;
         }
         else
         {
+
+            printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+            __builtin_trap();
             // Note: this is used with the MMA kind MxFp4NvFp4 and also when casting to a higher-precision
             // type such as Bfloat16 before the MMA.
-            tmaDataFormat = CU_TENSOR_MAP_DATA_TYPE_16U4_ALIGN8B;
+            // tmaDataFormat = CU_TENSOR_MAP_DATA_TYPE_16U4_ALIGN8B;
         }
     }
     else if (dtype == tg::Dtype::Fp32)

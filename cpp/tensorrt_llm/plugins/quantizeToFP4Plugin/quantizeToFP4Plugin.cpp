@@ -25,7 +25,8 @@ using namespace tensorrt_llm::common;
 using tensorrt_llm::plugins::QuantizeToFP4PluginCreator;
 using tensorrt_llm::plugins::QuantizeToFP4Plugin;
 
-constexpr nvinfer1::DataType FP4_DTYPE = nvinfer1::DataType::kFP4;
+// constexpr nvinfer1::DataType FP4_DTYPE = nvinfer1::DataType::kFP4;
+constexpr nvinfer1::DataType FP4_DTYPE = nvinfer1::DataType::kFP8;
 constexpr nvinfer1::DataType FP8_DTYPE = nvinfer1::DataType::kFP8;
 
 static char const* QUANT_FP4_PLUGIN_VERSION{"1"};

@@ -22,7 +22,7 @@
 #include "tensorrt_llm/common/config.h"
 
 #ifdef ENABLE_FP4
-#include <cuda_fp4.h>
+// #include <cuda_fp4.h>
 #endif
 
 TRTLLM_NAMESPACE_BEGIN

@@ -43,9 +43,21 @@ namespace kernels = CUTLASS_MOE_GEMM_KERNELS_NAMESPACE;
 using MoeMinLatencyParams = CUTLASS_MOE_GEMM_KERNELS_NAMESPACE::MoeMinLatencyParams;
 using MOEParallelismConfig = CUTLASS_MOE_GEMM_KERNELS_NAMESPACE::MOEParallelismConfig;
 using QuantParams = CUTLASS_MOE_GEMM_KERNELS_NAMESPACE::QuantParams;
-using MoeGemmId = CUTLASS_MOE_GEMM_NAMESPACE::MoeGemmId;
+// using MoeGemmId = CUTLASS_MOE_GEMM_NAMESPACE::MoeGemmId;
+struct MoeGemmId {
+    enum {
+        GEMM_1 = 0,
+        GEMM_2 = 1
+    };
+};
 using ActivationType = CUTLASS_MOE_GEMM_NAMESPACE::ActivationType;
-using ActivationParams = CUTLASS_MOE_GEMM_KERNELS_NAMESPACE::ActivationParams;
+// using ActivationParams = CUTLASS_MOE_GEMM_KERNELS_NAMESPACE::ActivationParams;
+struct ActivationParams {
+    // A dummy constructor that accepts any 4 arguments and does nothing
+    ActivationParams(int a, const float* b, const float* c, const float* d) {}
+    // If it's used as a type later, we might need dummy members:
+    void* ptr = nullptr;
+};
 using TmaWarpSpecializedGroupedGemmInput = CUTLASS_MOE_GEMM_NAMESPACE::TmaWarpSpecializedGroupedGemmInput;
 using CUTLASS_MOE_GEMM_NAMESPACE::isGatedActivation;
 

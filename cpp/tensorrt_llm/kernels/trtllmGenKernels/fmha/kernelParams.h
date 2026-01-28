@@ -21,6 +21,7 @@
 #include <math.h>
 #endif
 
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <cute/tensor.hpp>
@@ -591,7 +592,10 @@ struct KernelParams
         CUtensorMapDataType tmaDataFormat;
         if (dtypeElt == DATA_TYPE_E2M1)
         {
-            tmaDataFormat = unpack4b ? CU_TENSOR_MAP_DATA_TYPE_16U4_ALIGN16B : CU_TENSOR_MAP_DATA_TYPE_UINT8;
+            printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+            __builtin_trap();
+            tmaDataFormat = CU_TENSOR_MAP_DATA_TYPE_UINT8;
+
         }
         else if (dtypeElt == DATA_TYPE_E4M3)
         {
@@ -617,7 +621,7 @@ struct KernelParams
         {
             swizzleType = CU_TENSOR_MAP_SWIZZLE_NONE;
         }
-        else if (tmaDataFormat == CU_TENSOR_MAP_DATA_TYPE_16U4_ALIGN16B)
+        else if (tmaDataFormat == CU_TENSOR_MAP_DATA_TYPE_UINT8)
         {
             swizzleType = CU_TENSOR_MAP_SWIZZLE_128B;
         }

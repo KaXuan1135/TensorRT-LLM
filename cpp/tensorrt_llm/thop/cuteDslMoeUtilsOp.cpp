@@ -18,7 +18,7 @@
 #include "tensorrt_llm/kernels/trtllmGenKernels/blockScaleMoe/runner.h"
 #include "tensorrt_llm/thop/thUtils.h"
 
-#include <cuda_fp4.h>
+// #include <cuda_fp4.h>
 
 TRTLLM_NAMESPACE_BEGIN
 
@@ -191,7 +191,9 @@ std::tuple<torch::Tensor, torch::optional<torch::Tensor>> moe_permute(torch::Ten
     }
     else if (input.scalar_type() == torch::kFloat4_e2m1fn_x2)
     {
-        DISPATCH_MOE_PERMUTE(__nv_fp4_e2m1, uint8_t);
+        printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+        __builtin_trap();
+        // DISPATCH_MOE_PERMUTE(__nv_fp4_e2m1, uint8_t);
     }
     else
     {
@@ -424,11 +426,16 @@ std::tuple<torch::Tensor, torch::Tensor> moe_swiglu_nvfp4_quantize(torch::Tensor
 
     if (input.scalar_type() == torch::kHalf)
     {
-        DISPATCH_MOE_ACTIVATION(half, __nv_fp4_e2m1, uint8_t);
+
+        printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+        __builtin_trap();
+        // DISPATCH_MOE_ACTIVATION(half, __nv_fp4_e2m1, uint8_t);
     }
     else if (input.scalar_type() == torch::kBFloat16)
     {
-        DISPATCH_MOE_ACTIVATION(__nv_bfloat16, __nv_fp4_e2m1, uint8_t);
+        printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+        __builtin_trap();
+        // DISPATCH_MOE_ACTIVATION(__nv_bfloat16, __nv_fp4_e2m1, uint8_t);
     }
     else
     {

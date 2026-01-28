@@ -203,7 +203,7 @@ private:
         case nvinfer1::DataType::kINT8: return "INT8";
         case nvinfer1::DataType::kFP8: return "FP8";
         case nvinfer1::DataType::kINT4: return "INT4";
-        case nvinfer1::DataType::kFP4: return "FP4";
+        // case nvinfer1::DataType::kFP4: return "FP4";
         default: return "UNKNOWN";
         }
         return "";

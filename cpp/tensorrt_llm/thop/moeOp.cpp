@@ -50,9 +50,21 @@ namespace torch_ext
 
 namespace common = tensorrt_llm::common;
 namespace kernels = CUTLASS_MOE_GEMM_KERNELS_NAMESPACE;
-using ActivationParams = CUTLASS_MOE_GEMM_NAMESPACE::ActivationParams;
+// using ActivationParams = CUTLASS_MOE_GEMM_NAMESPACE::ActivationParams;
+struct ActivationParams {
+    // A dummy constructor that accepts any 4 arguments and does nothing
+    ActivationParams(int a, const float* b, const float* c, const float* d) {}
+    // If it's used as a type later, we might need dummy members:
+    void* ptr = nullptr;
+};
 using ActivationType = CUTLASS_MOE_GEMM_NAMESPACE::ActivationType;
-using MoeGemmId = CUTLASS_MOE_GEMM_NAMESPACE::MoeGemmId;
+// using MoeGemmId = CUTLASS_MOE_GEMM_NAMESPACE::MoeGemmId;
+struct MoeGemmId {
+    enum {
+        GEMM_1 = 0,
+        GEMM_2 = 1
+    };
+};
 // Always use public header as it is just utility functions and types
 using TmaWarpSpecializedGroupedGemmInput = tensorrt_llm::kernels::cutlass_kernels::TmaWarpSpecializedGroupedGemmInput;
 using profiler_backend = CUTLASS_MOE_GEMM_KERNELS_NAMESPACE::GemmProfilerBackend;

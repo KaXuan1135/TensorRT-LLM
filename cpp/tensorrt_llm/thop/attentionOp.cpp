@@ -663,7 +663,10 @@ void attention(torch::Tensor q, std::optional<torch::Tensor> k, std::optional<to
         }
         else if (is_fp4_out)
         {
-            runner = std::make_shared<Runner<half, __nv_fp4_e2m1>>();
+            printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+            __builtin_trap();
+            runner = std::make_shared<Runner<half, __nv_fp8_e4m3>>();
+            // runner = std::make_shared<Runner<half, __nv_fp4_e2m1>>();
         }
         else
         {
@@ -685,7 +688,9 @@ void attention(torch::Tensor q, std::optional<torch::Tensor> k, std::optional<to
         }
         else if (is_fp4_out)
         {
-            runner = std::make_shared<Runner<__nv_bfloat16, __nv_fp4_e2m1>>();
+            printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+            __builtin_trap();
+            // runner = std::make_shared<Runner<__nv_bfloat16, __nv_fp4_e2m1>>();
         }
         else
         {

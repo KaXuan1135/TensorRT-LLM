@@ -198,10 +198,14 @@ void runGemm(cudaKernel_t kernel, void* mat_a, int ld_a, void* mat_b, int ld_b, 
     input.shape_m = shape_m;
     input.grouped_layout = grouped_layout;
 
+    printf("FATAL: DeepGEMM/FP8 kernels are not supported on Orin Nano (Ampere).\n");
+    auto status = cudaErrorNotSupported; 
+    DG_HOST_ASSERT(false && "DeepGEMM execution attempted on unsupported architecture.");
+
     // Launch
-    auto status = cudaLaunchKernelEx(&config, kernel, reinterpret_cast<__nv_bfloat16*>(mat_d), scales_b, input,
-        tma_a_desc, tma_b_desc, tma_scales_a_desc, tma_d_desc);
-    DG_HOST_ASSERT(status == cudaSuccess);
+    // auto status = cudaLaunchKernelEx(&config, kernel, reinterpret_cast<__nv_bfloat16*>(mat_d), scales_b, input,
+    //     tma_a_desc, tma_b_desc, tma_scales_a_desc, tma_d_desc);
+    // DG_HOST_ASSERT(status == cudaSuccess);
 }
 
 template <typename LayoutIndexType>
@@ -241,9 +245,13 @@ void runGemmSwapAB(cudaKernel_t kernel, void* mat_a, int ld_a, void* mat_b, int 
     input.shape_n = shape_n;
     input.grouped_layout = grouped_layout;
 
-    auto status = cudaLaunchKernelEx(&config, kernel, reinterpret_cast<__nv_bfloat16*>(mat_d), scales_a, input,
-        tma_a_desc, tma_b_desc, tma_scales_b_desc, tma_d_desc);
-    DG_HOST_ASSERT(status == cudaSuccess);
+    printf("FATAL: DeepGEMM/FP8 kernels are not supported on Orin Nano (Ampere).\n");
+    auto status = cudaErrorNotSupported; 
+    DG_HOST_ASSERT(false && "DeepGEMM execution attempted on unsupported architecture.");
+
+    // auto status = cudaLaunchKernelEx(&config, kernel, reinterpret_cast<__nv_bfloat16*>(mat_d), scales_a, input,
+    //     tma_a_desc, tma_b_desc, tma_scales_b_desc, tma_d_desc);
+    // DG_HOST_ASSERT(status == cudaSuccess);
 }
 
 template <typename LayoutIndexType>
@@ -282,10 +290,14 @@ void runGemm(cudaKernel_t kernel, void* mat_a, int ld_a, void* mat_b, int ld_b, 
     GroupedWithOffsetSchedulerInput input;
     input.problem_m_offsets = problem_m_offsets;
 
+    printf("FATAL: DeepGEMM/FP8 kernels are not supported on Orin Nano (Ampere).\n");
+    auto status = cudaErrorNotSupported; 
+    DG_HOST_ASSERT(false && "DeepGEMM execution attempted on unsupported architecture.");
+
     // Launch
-    auto status = cudaLaunchKernelEx(&config, kernel, reinterpret_cast<__nv_bfloat16*>(mat_d), scales_b, input,
-        tma_a_desc, tma_b_desc, tma_scales_a_desc, tma_d_desc);
-    DG_HOST_ASSERT(status == cudaSuccess);
+    // auto status = cudaLaunchKernelEx(&config, kernel, reinterpret_cast<__nv_bfloat16*>(mat_d), scales_b, input,
+    //     tma_a_desc, tma_b_desc, tma_scales_a_desc, tma_d_desc);
+    // DG_HOST_ASSERT(status == cudaSuccess);
 }
 
 template <typename LayoutIndexType>
@@ -326,9 +338,13 @@ void runGemmSwapAB(cudaKernel_t kernel, void* mat_a /* weight*/, int ld_a, void*
     GroupedWithOffsetSchedulerInputSwapAB input;
     input.problem_n_offsets = problem_n_offsets; // Now offsets are for N dimension
 
-    auto status = cudaLaunchKernelEx(&config, kernel, reinterpret_cast<__nv_bfloat16*>(mat_d), scales_a, input,
-        tma_a_desc, tma_b_desc, tma_scales_b_desc, tma_d_desc);
-    DG_HOST_ASSERT(status == cudaSuccess);
+    printf("FATAL: DeepGEMM/FP8 kernels are not supported on Orin Nano (Ampere).\n");
+    auto status = cudaErrorNotSupported; 
+    DG_HOST_ASSERT(false && "DeepGEMM execution attempted on unsupported architecture.");
+
+    // auto status = cudaLaunchKernelEx(&config, kernel, reinterpret_cast<__nv_bfloat16*>(mat_d), scales_a, input,
+    //     tma_a_desc, tma_b_desc, tma_scales_b_desc, tma_d_desc);
+    // DG_HOST_ASSERT(status == cudaSuccess);
 }
 
 void runGemm(cudaKernel_t kernel, void* mat_a, uint64_t ld_a, uint64_t stride_a, void* mat_b, uint64_t ld_b,
@@ -365,10 +381,14 @@ void runGemm(cudaKernel_t kernel, void* mat_a, uint64_t ld_a, uint64_t stride_a,
     config.numAttrs = 1;
 
     StridedBatchedSchedulerInput input{shape_m, ld_a, stride_a, ld_b, stride_b, ld_d, stride_d};
+    printf("FATAL: DeepGEMM/FP8 kernels are not supported on Orin Nano (Ampere).\n");
+    auto status = cudaErrorNotSupported; 
+    DG_HOST_ASSERT(false && "DeepGEMM execution attempted on unsupported architecture.");
+
     // Launch
-    auto status = cudaLaunchKernelEx(&config, kernel, reinterpret_cast<__nv_bfloat16*>(mat_d), scales_b, input,
-        tma_a_desc, tma_b_desc, tma_scales_a_desc, tma_d_desc);
-    DG_HOST_ASSERT(status == cudaSuccess);
+    // auto status = cudaLaunchKernelEx(&config, kernel, reinterpret_cast<__nv_bfloat16*>(mat_d), scales_b, input,
+    //     tma_a_desc, tma_b_desc, tma_scales_a_desc, tma_d_desc);
+    // DG_HOST_ASSERT(status == cudaSuccess);
 }
 
 }; // namespace deep_gemm

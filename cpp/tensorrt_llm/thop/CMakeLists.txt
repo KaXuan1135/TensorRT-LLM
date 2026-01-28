@@ -37,67 +37,67 @@ target_link_libraries(th_utils PUBLIC ${TORCH_LIBRARIES} ${CUBLAS_LIB}
 # TODO This does not compile with internal cutlass MOE gemm
 add_library(
   th_common SHARED
-  mlaPreprocessOp.cpp
-  allgatherOp.cpp
-  allreduceOp.cpp
-  alltoallOp.cpp
+  # mlaPreprocessOp.cpp
+  # allgatherOp.cpp
+  # allreduceOp.cpp
+  # alltoallOp.cpp
   attentionOp.cpp
   causalConv1dOp.cpp
   convertSpecDecodingMaskToPackedMaskOp.cpp
-  cuteDslMoeUtilsOp.cpp
+  # cuteDslMoeUtilsOp.cpp
   cutlassScaledMM.cpp
   cublasScaledMM.cpp
-  cublasFp4ScaledMM.cpp
-  cudaNvfp4MM.cpp
+  # cublasFp4ScaledMM.cpp
+  # cudaNvfp4MM.cpp
   cudaScaledMM.cpp
   dynamicDecodeOp.cpp
   fmhaPackMaskOp.cpp
-  fp8Op.cpp
-  fp8PerTensorScalingTrtllmGenGemm.cpp
-  fp4Op.cpp
-  fp4Gemm.cpp
-  fp4GemmTrtllmGen.cpp
-  fp8BatchedGemmTrtllmGen.cpp
-  fp4Quantize.cpp
-  fp4BatchedQuantize.cpp
-  fp4xFp8GemmTrtllmGen.cpp
-  fp8BlockScalingGemm.cpp
-  fp8RowwiseGemm.cpp
-  fp8Quantize.cpp
-  dsv3FusedAGemmOp.cpp
+  # fp8Op.cpp
+  # fp8PerTensorScalingTrtllmGenGemm.cpp
+  # fp4Op.cpp
+  # fp4Gemm.cpp
+  # fp4GemmTrtllmGen.cpp
+  # fp8BatchedGemmTrtllmGen.cpp
+  # fp4Quantize.cpp
+  # fp4BatchedQuantize.cpp
+  # fp4xFp8GemmTrtllmGen.cpp
+  # fp8BlockScalingGemm.cpp
+  # fp8RowwiseGemm.cpp
+  # fp8Quantize.cpp
+  # dsv3FusedAGemmOp.cpp
   fusedQKNormRopeOp.cpp
   fusedAddRMSNormQuant.cpp
   fusedTopkSoftmax.cpp
   gatherTreeOp.cpp
   groupRmsNormOp.cpp
   helixPostProcessOp.cpp
-  llama4MinLatency.cpp
+  # llama4MinLatency.cpp
   logitsBitmaskOp.cpp
-  mambaConv1dOp.cpp
-  moeOp.cpp
-  moeUtilOp.cpp
-  moeCommOp.cpp
-  moeAlltoAllOp.cpp
-  moeLoadBalanceOp.cpp
-  moeAlignOp.cpp
-  mxFp4BlockScaleMoe.cpp
-  mxFp8Quantize.cpp
-  fp8BlockScaleMoe.cpp
-  fp8PerTensorScaleMoe.cpp
-  fp4BlockScaleMoe.cpp
+  # mambaConv1dOp.cpp
+  # moeOp.cpp
+  # moeUtilOp.cpp
+  # moeCommOp.cpp
+  # moeAlltoAllOp.cpp
+  # moeLoadBalanceOp.cpp
+  # moeAlignOp.cpp
+  # mxFp4BlockScaleMoe.cpp
+  # mxFp8Quantize.cpp
+  # fp8BlockScaleMoe.cpp
+  # fp8PerTensorScaleMoe.cpp
+  # fp4BlockScaleMoe.cpp
   noAuxTcOp.cpp
   IndexerKCacheScatterOp.cpp
   IndexerTopKOp.cpp
-  ncclCommunicatorOp.cpp
+  # ncclCommunicatorOp.cpp
   parallelDecodeKVCacheUpdateOp.cpp
   redrafterCurandOp.cpp
-  reducescatterOp.cpp
+  # reducescatterOp.cpp
   relativeAttentionBiasOp.cpp
-  dsv3RouterGemmOp.cpp
-  customMoeRoutingOp.cpp
-  selectiveScanOp.cpp
-  userbuffersFinalizeOp.cpp
-  userbuffersTensor.cpp
+  # dsv3RouterGemmOp.cpp
+  # customMoeRoutingOp.cpp
+  # selectiveScanOp.cpp
+  # userbuffersFinalizeOp.cpp
+  # userbuffersTensor.cpp
   virtualMemoryAllocator.cpp
   weightOnlyQuantGemm.cpp
   weightOnlyQuantOp.cpp
@@ -105,8 +105,9 @@ add_library(
   loraOp.cpp
   finegrained_mixed_dtype_gemm_thop.cpp
   tinygemm2.cpp
-  dsv3RopeOp.cpp
-  fusedGemmAllreduceOp.cpp)
+  # dsv3RopeOp.cpp
+  # fusedGemmAllreduceOp.cpp
+)
 set_property(TARGET th_common PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(
   th_common PRIVATE ${TORCH_LIBRARIES} th_utils ${Python3_LIBRARIES}
