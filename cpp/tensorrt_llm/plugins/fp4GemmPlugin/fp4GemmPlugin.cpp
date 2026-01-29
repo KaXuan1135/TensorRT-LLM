@@ -31,7 +31,8 @@ using namespace tensorrt_llm::kernels::cutlass_kernels;
 using namespace tensorrt_llm::kernels::internal_cutlass_kernels;
 #endif
 
-constexpr nvinfer1::DataType FP4_DTYPE = nvinfer1::DataType::kFP4;
+// constexpr nvinfer1::DataType FP4_DTYPE = nvinfer1::DataType::kFP4;
+constexpr nvinfer1::DataType FP4_DTYPE = nvinfer1::DataType::kFP8;
 constexpr nvinfer1::DataType FP8_DTYPE = nvinfer1::DataType::kFP8;
 
 static char const* FP4_GEMM_PLUGIN_VERSION{"1"};

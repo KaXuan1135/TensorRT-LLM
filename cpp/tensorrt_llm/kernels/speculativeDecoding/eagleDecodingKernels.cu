@@ -508,7 +508,7 @@ __global__ void prepareGenEagleNetInputsKernel(SizeType32* nextSequenceLengths, 
     BlockScan(tempStorage.scan).ExclusiveSum(numNextLogits, outputLastIndicesBase);
     // Sync because tempStorage is reused.
     __syncthreads();
-    auto const maxGenLength = BlockReduce(tempStorage.reduce).Reduce(nextDraftLen, cuda::maximum());
+    auto const maxGenLength = BlockReduce(tempStorage.reduce).Reduce(nextDraftLen, [](int a, int b) { return a > b ? a : b; });
 
     // Thread 0 has the result.
     if (bid == 0)

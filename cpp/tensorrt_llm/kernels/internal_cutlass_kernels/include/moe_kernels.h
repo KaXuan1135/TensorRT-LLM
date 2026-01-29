@@ -24,7 +24,7 @@
 #include "tensorrt_llm/common/quantization.h"
 #include "tensorrt_llm/kernels/cutlass_kernels/fp8_blockscale_gemm/fp8_blockscale_gemm.h"
 #ifdef ENABLE_FP4
-#include <cuda_fp4.h>
+// #include <cuda_fp4.h>
 #endif
 #include <NvInferRuntime.h>
 #include <array>
@@ -895,16 +895,16 @@ public:
         mSorter.updateNumExperts(mNumExpertsPerNode);
 
         mScalingType = TmaWarpSpecializedGroupedGemmInput::FpXBlockScalingType::NONE;
-        if (dtype == nvinfer1::DataType::kFP8
-            && (wtype == nvinfer1::DataType::kFP4 || wtype == nvinfer1::DataType::kINT64))
-        {
-            mScalingType = TmaWarpSpecializedGroupedGemmInput::FpXBlockScalingType::MXFPX;
-        }
-        else if ((dtype == nvinfer1::DataType::kFP4 || dtype == nvinfer1::DataType::kINT64)
-            && (wtype == nvinfer1::DataType::kFP4 || wtype == nvinfer1::DataType::kINT64))
-        {
-            mScalingType = TmaWarpSpecializedGroupedGemmInput::FpXBlockScalingType::NVFP4;
-        }
+        // if (dtype == nvinfer1::DataType::kFP8
+        //     && (wtype == nvinfer1::DataType::kFP4 || wtype == nvinfer1::DataType::kINT64))
+        // {
+        //     mScalingType = TmaWarpSpecializedGroupedGemmInput::FpXBlockScalingType::MXFPX;
+        // }
+        // else if ((dtype == nvinfer1::DataType::kFP4 || dtype == nvinfer1::DataType::kINT64)
+        //     && (wtype == nvinfer1::DataType::kFP4 || wtype == nvinfer1::DataType::kINT64))
+        // {
+        //     mScalingType = TmaWarpSpecializedGroupedGemmInput::FpXBlockScalingType::NVFP4;
+        // }
     }
 
     void prepare(int num_tokens, char* workspace, void const* expert_weights, cudaStream_t stream);

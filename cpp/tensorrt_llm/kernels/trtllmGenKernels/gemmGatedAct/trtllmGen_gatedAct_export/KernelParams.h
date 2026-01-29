@@ -56,7 +56,9 @@ CUtensorMap buildNdTmaDescriptor(tg::Dtype dtype, std::vector<uint64_t> const& s
     }
     else if (dtype == tg::Dtype::E2m1)
     {
-        tmaDataFormat = CU_TENSOR_MAP_DATA_TYPE_16U4_ALIGN8B;
+        printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+        __builtin_trap();
+        // tmaDataFormat = CU_TENSOR_MAP_DATA_TYPE_16U4_ALIGN8B;
     }
     else if (dtype == tg::Dtype::Fp32)
     {

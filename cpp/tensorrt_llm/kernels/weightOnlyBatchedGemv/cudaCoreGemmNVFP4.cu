@@ -257,15 +257,21 @@ bool cudaCoreGemmDispatcher(Params const& params, cudaStream_t stream)
         }
         else if (params.outputType == CUDA_R_16F)
         {
-            dispatched = cudaCoreGemmLauncher<__nv_fp4_e2m1, half, __nv_fp8_e4m3>(params, stream);
+            printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+            __builtin_trap();
+            // dispatched = cudaCoreGemmLauncher<__nv_fp4_e2m1, half, __nv_fp8_e4m3>(params, stream);
         }
         else if (params.outputType == CUDA_R_16BF)
         {
-            dispatched = cudaCoreGemmLauncher<__nv_fp4_e2m1, __nv_bfloat16, __nv_fp8_e4m3>(params, stream);
+            printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+            __builtin_trap();
+            // dispatched = cudaCoreGemmLauncher<__nv_fp4_e2m1, __nv_bfloat16, __nv_fp8_e4m3>(params, stream);
         }
         else if (params.outputType == CUDA_R_32F)
         {
-            dispatched = cudaCoreGemmLauncher<__nv_fp4_e2m1, float, __nv_fp8_e4m3>(params, stream);
+            printf("\nFATAL ERROR: 4-bit TMA path reached on Orin Nano! You will get corrupted output!\n");
+            __builtin_trap();
+            // dispatched = cudaCoreGemmLauncher<__nv_fp4_e2m1, float, __nv_fp8_e4m3>(params, stream);
         }
         else
         {

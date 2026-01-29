@@ -33,7 +33,7 @@
 #include "./common.h"
 
 #ifdef ENABLE_FP4
-#include <cuda_fp4.h>
+// #include <cuda_fp4.h>
 #endif
 
 TRTLLM_NAMESPACE_BEGIN
@@ -265,18 +265,22 @@ public:
     MoeGemmRunner();
 
 #if defined(ENABLE_BF16)
-    static constexpr bool use_wfp4a16
-        = std::is_same_v<WeightType, __nv_fp4_e2m1> && (std::is_same_v<T, half> || std::is_same_v<T, __nv_bfloat16>);
+    // static constexpr bool use_wfp4a16
+        // = std::is_same_v<WeightType, __nv_fp4_e2m1> && (std::is_same_v<T, half> || std::is_same_v<T, __nv_bfloat16>);
+    static constexpr bool use_wfp4a16 = false;
 #else
-    static constexpr bool use_wfp4a16 = std::is_same_v<WeightType, __nv_fp4_e2m1> && std::is_same_v<T, half>;
+    // static constexpr bool use_wfp4a16 = std::is_same_v<WeightType, __nv_fp4_e2m1> && std::is_same_v<T, half>;
+    static constexpr bool use_wfp4a16 = false;
 #endif
+
 #if defined(ENABLE_FP8)
     static constexpr bool use_fp8
         = (std::is_same_v<T, __nv_fp8_e4m3>
               || std::is_same_v<T, __nv_fp8_e5m2>) &&!std::is_same_v<WeightType, cutlass::uint4b_t>
-#if defined(ENABLE_FP4)
-        && !std::is_same_v<WeightType, __nv_fp4_e2m1>
-#endif
+    #if defined(ENABLE_FP4)
+            // && !std::is_same_v<WeightType, __nv_fp4_e2m1>
+            && true
+    #endif
         ;
     static constexpr bool use_w4afp8
         = std::is_same_v<T, __nv_fp8_e4m3> && std::is_same_v<WeightType, cutlass::uint4b_t>;
@@ -284,11 +288,14 @@ public:
     static constexpr bool use_fp8 = false;
     static constexpr bool use_w4afp8 = false;
 #endif
-    static constexpr bool use_w4_groupwise = use_w4afp8 || use_wfp4a16;
+
+static constexpr bool use_w4_groupwise = use_w4afp8 || use_wfp4a16;
 
 #if defined(ENABLE_FP4)
-    static constexpr bool use_fp4 = std::is_same_v<T, __nv_fp4_e2m1>;
-    static constexpr bool use_wfp4afp8 = std::is_same_v<T, __nv_fp8_e4m3> && std::is_same_v<WeightType, __nv_fp4_e2m1>;
+    // static constexpr bool use_fp4 = std::is_same_v<T, __nv_fp4_e2m1>;
+    // static constexpr bool use_wfp4afp8 = std::is_same_v<T, __nv_fp8_e4m3> && std::is_same_v<WeightType, __nv_fp4_e2m1>;
+    static constexpr bool use_fp4 = false;
+    static constexpr bool use_wfp4afp8 = false;
 #else
     static constexpr bool use_fp4 = false;
     static constexpr bool use_wfp4afp8 = false;

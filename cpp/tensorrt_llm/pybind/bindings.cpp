@@ -170,7 +170,7 @@ PYBIND11_MODULE(TRTLLM_PYBIND_MODULE, m)
         .value("FP8", nvinfer1::DataType::kFP8)
         .value("BF16", nvinfer1::DataType::kBF16)
         .value("INT64", nvinfer1::DataType::kINT64)
-        .value("NVFP4", nvinfer1::DataType::kFP4)
+        // .value("NVFP4", nvinfer1::DataType::kFP4)
         .export_values();
 
     py::enum_<tr::ModelConfig::ModelVariant>(m, "GptModelVariant")

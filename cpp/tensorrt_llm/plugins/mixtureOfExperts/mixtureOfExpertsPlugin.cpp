@@ -224,7 +224,7 @@ std::unique_ptr<kernels::CutlassMoeFCRunnerInterface> switch_output_type(nvinfer
 {
     switch (output_type)
     {
-    case nvinfer1::DataType::kFP4:
+    // case nvinfer1::DataType::kFP4:
     case nvinfer1::DataType::kFP8:
         // TODO We need an atomic FP8 reduction for the finalize fusions
         TLLM_THROW("Outputting %d directly is not currently supported", static_cast<int>(output_type));
@@ -255,11 +255,13 @@ std::unique_ptr<kernels::CutlassMoeFCRunnerInterface> switch_output_type(nvinfer
 
 void MixtureOfExpertsPlugin::init()
 {
-    TLLM_CHECK_WITH_INFO(mType == DataType::kFP8 || mType == DataType::kFP4 || mOutputType == mType,
-        "MOE plugin only supports a different output type for FP4/FP8");
+    // TLLM_CHECK_WITH_INFO(mType == DataType::kFP8 || mType == DataType::kFP4 || mOutputType == mType,
+    TLLM_CHECK_WITH_INFO(mType == DataType::kFP8 || mOutputType == mType,
+    "MOE plugin only supports a different output type for FP4/FP8");
     TLLM_CHECK_WITH_INFO(mType != DataType::kFP8 || tensorrt_llm::common::getSMVersion() >= 89,
         "MoE FP8 is not supported for architectures less than SM89");
-    TLLM_CHECK_WITH_INFO(mType != DataType::kFP4 || (tensorrt_llm::common::getSMVersion() >= 100),
+    // TLLM_CHECK_WITH_INFO(mType != DataType::kFP4 || (tensorrt_llm::common::getSMVersion() >= 100),
+    TLLM_CHECK_WITH_INFO(tensorrt_llm::common::getSMVersion() >= 100,
         "MoE FP4 is only supported on architecture SM100 or later");
 
     TLLM_CHECK_WITH_INFO(!hasLora() || mLoraType == mOutputType, "The LoraType need to keep same with moe OutputType.");

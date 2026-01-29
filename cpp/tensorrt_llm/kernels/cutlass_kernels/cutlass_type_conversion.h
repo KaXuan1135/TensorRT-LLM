@@ -29,7 +29,7 @@
 #include <cuda_fp8.h>
 
 #include "cutlass/float_subbyte.h"
-#include <cuda_fp4.h>
+// // #include <cuda_fp4.h>
 
 TRTLLM_NAMESPACE_BEGIN
 
@@ -64,11 +64,11 @@ struct CutlassType<nvinfer1::DataType::kFP8>
     using type = cutlass::float_e4m3_t;
 };
 
-template <>
-struct CutlassType<nvinfer1::DataType::kFP4>
-{
-    using type = cutlass::float_e2m1_t;
-};
+// template <>
+// struct CutlassType<nvinfer1::DataType::kFP4>
+// {
+//     using type = cutlass::float_e2m1_t;
+// };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Tllm to Cutlass
