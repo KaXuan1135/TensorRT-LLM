@@ -46,10 +46,10 @@ add_library(
   convertSpecDecodingMaskToPackedMaskOp.cpp
   # cuteDslMoeUtilsOp.cpp
   cutlassScaledMM.cpp
-  cublasScaledMM.cpp
+  # cublasScaledMM.cpp
   # cublasFp4ScaledMM.cpp
   # cudaNvfp4MM.cpp
-  cudaScaledMM.cpp
+  # cudaScaledMM.cpp
   dynamicDecodeOp.cpp
   fmhaPackMaskOp.cpp
   # fp8Op.cpp
@@ -99,8 +99,8 @@ add_library(
   # userbuffersFinalizeOp.cpp
   # userbuffersTensor.cpp
   virtualMemoryAllocator.cpp
-  weightOnlyQuantGemm.cpp
-  weightOnlyQuantOp.cpp
+  # weightOnlyQuantGemm.cpp
+  # weightOnlyQuantOp.cpp
   specDecOp.cpp
   loraOp.cpp
   finegrained_mixed_dtype_gemm_thop.cpp

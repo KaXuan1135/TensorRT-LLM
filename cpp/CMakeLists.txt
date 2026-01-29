@@ -355,6 +355,10 @@ if(CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-relax")
 endif()
 
+# DEBUG , remove this line when building in orin nano
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--allow-shlib-undefined")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--allow-shlib-undefined")
+
 # Disable deprecated declarations warnings
 if(NOT WIN32)
   set(CMAKE_CXX_FLAGS "-Wno-deprecated-declarations ${CMAKE_CXX_FLAGS}")

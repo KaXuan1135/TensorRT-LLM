@@ -212,8 +212,8 @@ extern "C"
         static tensorrt_llm::plugins::GPTAttentionPluginCreator gptAttentionPluginCreator;
         static tensorrt_llm::plugins::GemmPluginCreator gemmPluginCreator;
         static tensorrt_llm::plugins::GemmSwigluPluginCreator gemmSwigluPluginCreator;
-        static tensorrt_llm::plugins::Fp8RowwiseGemmPluginCreator fp8RowwiseGemmPluginCreator;
-        static tensorrt_llm::plugins::MixtureOfExpertsPluginCreator moePluginCreator;
+        // static tensorrt_llm::plugins::Fp8RowwiseGemmPluginCreator fp8RowwiseGemmPluginCreator;
+        // static tensorrt_llm::plugins::MixtureOfExpertsPluginCreator moePluginCreator;
 #if ENABLE_MULTI_DEVICE
         static tensorrt_llm::plugins::SendPluginCreator sendPluginCreator;
         static tensorrt_llm::plugins::RecvPluginCreator recvPluginCreator;
@@ -225,7 +225,7 @@ extern "C"
         static tensorrt_llm::plugins::SmoothQuantGemmPluginCreator smoothQuantGemmPluginCreator;
         static tensorrt_llm::plugins::QServeGemmPluginCreator qserveGemmPluginCreator;
         static tensorrt_llm::plugins::LayernormQuantizationPluginCreator layernormQuantizationPluginCreator;
-        static tensorrt_llm::plugins::QuantizeToFP4PluginCreator quantizeToFP4PluginCreator;
+        // static tensorrt_llm::plugins::QuantizeToFP4PluginCreator quantizeToFP4PluginCreator;
         static tensorrt_llm::plugins::QuantizePerTokenPluginCreator quantizePerTokenPluginCreator;
         static tensorrt_llm::plugins::QuantizeTensorPluginCreator quantizeTensorPluginCreator;
         static tensorrt_llm::plugins::RmsnormQuantizationPluginCreator rmsnormQuantizationPluginCreator;
@@ -234,9 +234,9 @@ extern "C"
         static tensorrt_llm::plugins::WeightOnlyQuantMatmulPluginCreator weightOnlyQuantMatmulPluginCreator;
         static tensorrt_llm::plugins::LookupPluginCreator lookupPluginCreator;
         static tensorrt_llm::plugins::LoraPluginCreator loraPluginCreator;
-        static tensorrt_llm::plugins::SelectiveScanPluginCreator selectiveScanPluginCreator;
-        static tensorrt_llm::plugins::Fp4GemmPluginCreator fp4GemmPluginCreator;
-        static tensorrt_llm::plugins::MambaConv1dPluginCreator mambaConv1DPluginCreator;
+        // static tensorrt_llm::plugins::SelectiveScanPluginCreator selectiveScanPluginCreator;
+        // static tensorrt_llm::plugins::Fp4GemmPluginCreator fp4GemmPluginCreator;
+        // static tensorrt_llm::plugins::MambaConv1dPluginCreator mambaConv1DPluginCreator;
         static tensorrt_llm::plugins::lruPluginCreator lruPluginCreator;
         static tensorrt_llm::plugins::CumsumLastDimPluginCreator cumsumLastDimPluginCreator;
         static tensorrt_llm::plugins::TopkLastDimPluginCreator topkLastDimPluginCreator;
@@ -253,8 +253,8 @@ extern "C"
                   creatorPtr(gptAttentionPluginCreator),
                   creatorPtr(gemmPluginCreator),
                   creatorPtr(gemmSwigluPluginCreator),
-                  creatorPtr(fp8RowwiseGemmPluginCreator),
-                  creatorPtr(moePluginCreator),
+                //   creatorPtr(fp8RowwiseGemmPluginCreator),
+                //   creatorPtr(moePluginCreator),
 #if ENABLE_MULTI_DEVICE
                   creatorPtr(sendPluginCreator),
                   creatorPtr(recvPluginCreator),
@@ -267,7 +267,7 @@ extern "C"
                   creatorPtr(smoothQuantGemmPluginCreator),
                   creatorPtr(qserveGemmPluginCreator),
                   creatorPtr(layernormQuantizationPluginCreator),
-                  creatorPtr(quantizeToFP4PluginCreator),
+                //   creatorPtr(quantizeToFP4PluginCreator),
                   creatorPtr(quantizePerTokenPluginCreator),
                   creatorPtr(quantizeTensorPluginCreator),
                   creatorPtr(rmsnormQuantizationPluginCreator),
@@ -275,9 +275,9 @@ extern "C"
                   creatorPtr(weightOnlyQuantMatmulPluginCreator),
                   creatorPtr(lookupPluginCreator),
                   creatorPtr(loraPluginCreator),
-                  creatorPtr(selectiveScanPluginCreator),
-                  creatorPtr(fp4GemmPluginCreator),
-                  creatorPtr(mambaConv1DPluginCreator),
+                //   creatorPtr(selectiveScanPluginCreator),
+                //   creatorPtr(fp4GemmPluginCreator),
+                //   creatorPtr(mambaConv1DPluginCreator),
                   creatorPtr(lruPluginCreator),
                   creatorPtr(cumsumLastDimPluginCreator),
                   creatorPtr(topkLastDimPluginCreator),

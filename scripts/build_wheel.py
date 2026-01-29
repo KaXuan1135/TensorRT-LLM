@@ -603,15 +603,23 @@ def main(*,
         build_deep_gemm = "OFF"
         build_flash_mla = "OFF"
     else:
+        # targets.extend([
+        #     "th_common", "bindings", "deep_ep", "deep_gemm", "pg_utils",
+        #     "flash_mla"
+        # ])
+        # build_pyt = "ON"
+        # build_deep_ep = "ON"
+        # build_deep_gemm = "ON"
+        # build_flash_mla = "ON"
+        
         targets.extend([
-            "th_common", "bindings", "deep_ep", "deep_gemm", "pg_utils",
-            "flash_mla"
+            "th_common", "bindings", "pg_utils"
         ])
         build_pyt = "ON"
-        build_deep_ep = "ON"
-        build_deep_gemm = "ON"
-        build_flash_mla = "ON"
-
+        build_deep_ep = "OFF"
+        build_deep_gemm = "OFF"
+        build_flash_mla = "OFF"
+        
     if benchmarks:
         targets.append("benchmarks")
 
@@ -662,6 +670,8 @@ def main(*,
         print("CMake Build command: ")
         print(cmake_build_command)
         build_run(cmake_build_command)
+
+    print('✅ Done Building')
 
     if cpp_only:
         assert not install, "Installing is not supported for cpp_only builds"
@@ -862,7 +872,7 @@ def main(*,
     if not on_windows:
         install_file(project_dir / "docker/common/install_tensorrt.sh",
                      scripts_dir / "install_tensorrt.sh")
-
+    
     if not cpp_only:
 
         def get_binding_lib(subdirectory, name):
@@ -881,46 +891,46 @@ def main(*,
         binding_lib_file_name = binding_lib_dir.name
         install_file(binding_lib_dir, pkg_dir)
 
-        with (build_dir / "tensorrt_llm" / "deep_ep" /
-              "cuda_architectures.txt").open() as f:
-            deep_ep_cuda_architectures = f.read().strip().strip(";")
-        if deep_ep_cuda_architectures:
-            install_file(get_binding_lib("deep_ep", "deep_ep_cpp_tllm"),
-                         pkg_dir)
-            install_tree(build_dir / "tensorrt_llm" / "deep_ep" / "python" /
-                         "deep_ep",
-                         deep_ep_dir,
-                         dirs_exist_ok=True)
-            (lib_dir / "nvshmem").mkdir(exist_ok=True)
-            install_file(
-                build_dir / "tensorrt_llm/deep_ep/nvshmem-build/License.txt",
-                lib_dir / "nvshmem")
-            install_file(
-                build_dir /
-                "tensorrt_llm/deep_ep/nvshmem-build/src/lib/nvshmem_bootstrap_uid.so.3",
-                lib_dir / "nvshmem")
-            install_file(
-                build_dir /
-                "tensorrt_llm/deep_ep/nvshmem-build/src/lib/nvshmem_transport_ibgda.so.103",
-                lib_dir / "nvshmem")
+        # with (build_dir / "tensorrt_llm" / "deep_ep" /
+        #       "cuda_architectures.txt").open() as f:
+        #     deep_ep_cuda_architectures = f.read().strip().strip(";")
+        # if deep_ep_cuda_architectures:
+        #     install_file(get_binding_lib("deep_ep", "deep_ep_cpp_tllm"),
+        #                  pkg_dir)
+        #     install_tree(build_dir / "tensorrt_llm" / "deep_ep" / "python" /
+        #                  "deep_ep",
+        #                  deep_ep_dir,
+        #                  dirs_exist_ok=True)
+        #     (lib_dir / "nvshmem").mkdir(exist_ok=True)
+        #     install_file(
+        #         build_dir / "tensorrt_llm/deep_ep/nvshmem-build/License.txt",
+        #         lib_dir / "nvshmem")
+        #     install_file(
+        #         build_dir /
+        #         "tensorrt_llm/deep_ep/nvshmem-build/src/lib/nvshmem_bootstrap_uid.so.3",
+        #         lib_dir / "nvshmem")
+        #     install_file(
+        #         build_dir /
+        #         "tensorrt_llm/deep_ep/nvshmem-build/src/lib/nvshmem_transport_ibgda.so.103",
+        #         lib_dir / "nvshmem")
 
-        install_file(get_binding_lib("deep_gemm", "deep_gemm_cpp_tllm"),
-                     pkg_dir)
-        install_tree(build_dir / "tensorrt_llm" / "deep_gemm" / "python" /
-                     "deep_gemm",
-                     deep_gemm_dir,
-                     dirs_exist_ok=True)
+        # install_file(get_binding_lib("deep_gemm", "deep_gemm_cpp_tllm"),
+        #              pkg_dir)
+        # install_tree(build_dir / "tensorrt_llm" / "deep_gemm" / "python" /
+        #              "deep_gemm",
+        #              deep_gemm_dir,
+        #              dirs_exist_ok=True)
 
-        with (build_dir / "tensorrt_llm" / "flash_mla" /
-              "cuda_architectures.txt").open() as f:
-            flash_mla_cuda_architectures = f.read().strip().strip(";")
-        if flash_mla_cuda_architectures:
-            install_file(get_binding_lib("flash_mla", "flash_mla_cpp_tllm"),
-                         pkg_dir)
-            install_tree(build_dir / "tensorrt_llm" / "flash_mla" / "python" /
-                         "flash_mla",
-                         pkg_dir / "flash_mla",
-                         dirs_exist_ok=True)
+        # with (build_dir / "tensorrt_llm" / "flash_mla" /
+        #       "cuda_architectures.txt").open() as f:
+        #     flash_mla_cuda_architectures = f.read().strip().strip(";")
+        # if flash_mla_cuda_architectures:
+        #     install_file(get_binding_lib("flash_mla", "flash_mla_cpp_tllm"),
+        #                  pkg_dir)
+        #     install_tree(build_dir / "tensorrt_llm" / "flash_mla" / "python" /
+        #                  "flash_mla",
+        #                  pkg_dir / "flash_mla",
+        #                  dirs_exist_ok=True)
 
         if not skip_stubs:
             with working_directory(pkg_dir):
@@ -928,8 +938,9 @@ def main(*,
                     generate_python_stubs_windows(venv_python, pkg_dir, lib_dir)
                 else:  # on linux
                     generate_python_stubs_linux(
-                        venv_python, bool(deep_ep_cuda_architectures),
-                        bool(flash_mla_cuda_architectures),
+                        # venv_python, bool(deep_ep_cuda_architectures),
+                        # bool(flash_mla_cuda_architectures),
+                        venv_python, False, False,
                         nixl_root is not None or mooncake_root is not None,
                         binding_lib_file_name)
 
