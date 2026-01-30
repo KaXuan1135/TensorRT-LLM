@@ -55,3 +55,4 @@ cpp/include/tensorrt_llm/executor/version.h
 
 # User config files
 CMakeUserPresets.json
+examples/qwen/InternVL3-1B/

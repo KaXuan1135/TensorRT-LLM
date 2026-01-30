@@ -1,0 +1,7 @@
+Defaulting to user installation because normal site-packages is not writeable
+Collecting pynvml
+  Downloading pynvml-13.0.1-py3-none-any.whl (28 kB)
+Collecting nvidia-ml-py>=12.0.0
+  Using cached nvidia_ml_py-13.590.48-py3-none-any.whl (50 kB)
+Installing collected packages: nvidia-ml-py, pynvml
+Successfully installed nvidia-ml-py-13.590.48 pynvml-13.0.1
