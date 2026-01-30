@@ -84,7 +84,7 @@ class QWenConfig(PretrainedConfig):
 
         qwen_type = hf_config.model_type
         valid_types = ('qwen', 'qwen2', 'qwen2_moe')
-        assert qwen_type in valid_types, f"Unsupported Qwen type: {qwen_type}, only {valid_types} are acceptable."
+        # assert qwen_type in valid_types, f"Unsupported Qwen type: {qwen_type}, only {valid_types} are acceptable."
         num_key_value_heads = getattr(hf_config, "num_key_value_heads",
                                       hf_config.num_attention_heads)
         head_dim = hf_config.hidden_size // hf_config.num_attention_heads

@@ -467,15 +467,25 @@ def split_matrix_tp(v, tensor_parallel, rank, dim):
 
 
 def get_weight(config, prefix, dtype):
+    # if config[prefix + '.weight'].dtype != dtype:
+    #     config[prefix + '.weight'].data = config[prefix + '.weight'].to(dtype)
+    # return config[prefix + '.weight'].detach()
+    prefix = 'language_model.' + prefix
     if config[prefix + '.weight'].dtype != dtype:
         config[prefix + '.weight'].data = config[prefix + '.weight'].to(dtype)
     return config[prefix + '.weight'].detach()
 
 
+
 def get_bias(config, prefix, dtype):
+    # if config[prefix + '.bias'].dtype != dtype:
+    #     config[prefix + '.bias'].data = config[prefix + '.bias'].to(dtype)
+    # return config[prefix + '.bias'].detach()
+    prefix = 'language_model.' + prefix
     if config[prefix + '.bias'].dtype != dtype:
         config[prefix + '.bias'].data = config[prefix + '.bias'].to(dtype)
     return config[prefix + '.bias'].detach()
+
 
 
 def get_weight_and_bias(config, prefix, dtype):
@@ -1253,8 +1263,14 @@ def load_weights_from_hf_gptq_model(hf_model, config: QWenConfig):
 
     model_params = {k: v for k, v in hf_model.state_dict().items()}
     torch.cuda.empty_cache()
+
     valid_types = ('qwen', 'qwen2')
-    assert qwen_type in valid_types, f"Unsupported Qwen type: {qwen_type}, only {valid_types} are supported for GPTQ."
+    internvl_prefix = 'language_model.'
+    if qwen_type == 'internvl_chat':
+        print(f'Detected internvl_chat, applying \"{internvl_prefix}\" as prefix to all params name.')
+    else:
+        assert qwen_type in valid_types, f"Unsupported Qwen type: {qwen_type}, only {valid_types} are supported for GPTQ."
+        
     layer_prefix = "transformer.h." if qwen_type == 'qwen' else "model.layers."
     key_list = get_qwen_key_list(qwen_type)
 
@@ -1321,17 +1337,22 @@ def load_weights_from_hf_gptq_model(hf_model, config: QWenConfig):
 
     # Load weights from GPTQ checkpoint into TRT-LLM module
     # 1. vocab_embedding
-    v = model_params[key_list[7] + '.weight']
+    print(model_params.keys())
+    print('Modified in', __file__)
+    # v = model_params[key_list[7] + '.weight']
+    v = model_params['language_model.' + key_list[7] + '.weight']
     if mapping.is_first_pp_rank():
         weights['transformer.vocab_embedding.weight'] = v.to(torch_dtype)
 
     # 2. ln_f
-    v = model_params[key_list[8] + '.weight']
+    # v = model_params[key_list[8] + '.weight']
+    v = model_params['language_model.' + key_list[8] + '.weight']
     if mapping.is_last_pp_rank():
         weights['transformer.ln_f.weight'] = v.to(torch_dtype)
 
     # 3. lm_head
-    v = model_params['lm_head.weight']
+    # v = model_params['lm_head.weight']
+    v = model_params['language_model.lm_head.weight']
     if mapping.is_last_pp_rank():
         weights['lm_head.weight'] = torch_split(v, 0).to(torch_dtype)
 
