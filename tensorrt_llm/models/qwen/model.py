@@ -307,6 +307,13 @@ class QWenForCausalLM(DecoderModelForCausalLM):
                                               quant_config=quant_config,
                                               **kwargs)
 
+        if config.num_attention_heads == 16 and config.num_key_value_heads == 8 and config.hidden_size == 1024:
+            raise NotImplementedError
+            # 6/2/2026 possibly should not hardcoding the head size? there should be some calculations wrong.
+            print('I guess your model is InternVL3_5? Hardcoding the head_dim to 128 instead of 64')
+            print('Modify by your need, at', __file__)
+            config.head_size = 128
+
         if not use_preloading:
             hf_model = load_hf_qwen(hf_model_dir, load_model_on_cpu)
         if use_hf_gptq_checkpoint:
@@ -315,8 +322,19 @@ class QWenForCausalLM(DecoderModelForCausalLM):
             weights = load_weights_from_hf_model(hf_model, config)
 
         check_share_embedding(weights, config)
+        
+
+
         model = QWenForCausalLM(config)
+
+        # print('qkv output shape', weights['transformer.layers.0.attention.qkv.weight'].shape)
+        # for name, param in model.named_parameters():
+        #     if name == 'transformer.layers.0.attention.qkv.weight':
+        #         print('qkv expected shape ', param.shape)
+        # assert 0
+
         model.load(weights)
+
         return model
 
     def default_plugin_config(self, **kwargs):

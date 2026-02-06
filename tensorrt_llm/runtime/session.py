@@ -187,6 +187,7 @@ class Session(object):
         if context is None:
             context = self.context
         for i in inputs:
+            import inspect
             if self.engine.get_tensor_mode(i.name) != trt.TensorIOMode.INPUT:
                 raise ValueError(f"Tensor:{i.name} is not an input tensor")
             if self.engine.get_tensor_dtype(i.name) != i.dtype:

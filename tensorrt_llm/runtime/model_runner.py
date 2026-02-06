@@ -81,7 +81,7 @@ def read_config(config_path: Path) -> Tuple[ModelConfig, dict]:
 
 
 def _builder_to_model_config(config: dict) -> Tuple[ModelConfig, dict]:
-    builder_config = config['builder_config']
+    builder_config = config['build_config']
     model_name = builder_config['name']
     dtype = builder_config['precision']
     tp_size = builder_config['tensor_parallel']

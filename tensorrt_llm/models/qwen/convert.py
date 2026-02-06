@@ -486,8 +486,6 @@ def get_bias(config, prefix, dtype):
         config[prefix + '.bias'].data = config[prefix + '.bias'].to(dtype)
     return config[prefix + '.bias'].detach()
 
-
-
 def get_weight_and_bias(config, prefix, dtype):
     return get_weight(config, prefix, dtype), get_bias(config, prefix, dtype)
 
@@ -507,6 +505,7 @@ def get_tllm_linear_weight(weight,
             v = weight.transpose(1, 2).contiguous().clone()
         else:
             v = weight.t().contiguous().clone()
+
         processed_torch_weights, torch_weight_scales = \
             torch.ops.trtllm.symmetric_quantize_last_axis_of_batched_matrix(
                 v.cpu(), plugin_weight_only_quant_type)
@@ -716,7 +715,8 @@ def convert_hf_qwen(hf_model,
                     act_range=[],
                     qkv_para=[],
                     smoother=[],
-                    moe_config=None):
+                    moe_config=None,
+                    qwen_config=None):
     weights = {}
     tik = time.time()
     tensor_parallel = mapping.tp_size
@@ -750,14 +750,33 @@ def convert_hf_qwen(hf_model,
                                       hidden_size, tensor_parallel,
                                       mapping.tp_rank)
         else:
-            q_weight, q_bias = get_weight_and_bias(
-                model_params, prefix + key_list[0] + 'q_proj', dtype)
-            k_weight, k_bias = get_weight_and_bias(
-                model_params, prefix + key_list[0] + 'k_proj', dtype)
-            v_weight, v_bias = get_weight_and_bias(
-                model_params, prefix + key_list[0] + 'v_proj', dtype)
+
+            has_qkv_bias = getattr(hf_model.config, "attention_bias", True)
+
+            if has_qkv_bias:
+                q_weight, q_bias = get_weight_and_bias(
+                    model_params, prefix + key_list[0] + 'q_proj', dtype)
+                k_weight, k_bias = get_weight_and_bias(
+                    model_params, prefix + key_list[0] + 'k_proj', dtype)
+                v_weight, v_bias = get_weight_and_bias(
+                    model_params, prefix + key_list[0] + 'v_proj', dtype)
+            else:
+                q_weight = get_weight(model_params, prefix + key_list[0] + 'q_proj', dtype)
+                k_weight = get_weight(model_params, prefix + key_list[0] + 'k_proj', dtype)
+                v_weight = get_weight(model_params, prefix + key_list[0] + 'v_proj', dtype)
+
+                num_q_heads = qwen_config.num_attention_heads
+                num_kv_heads = qwen_config.num_key_value_heads
+                head_dim = qwen_config.head_size
+
+                q_bias = torch.zeros(num_q_heads * head_dim, dtype=q_weight.dtype, device=q_weight.device)
+                k_bias = torch.zeros(num_kv_heads * head_dim, dtype=q_weight.dtype, device=q_weight.device)
+                v_bias = torch.zeros(num_kv_heads * head_dim, dtype=q_weight.dtype, device=q_weight.device)
+
+
             if not mha_mode:
                 if num_key_value_heads < tensor_parallel:
+                    
                     # duplicate the KV heads up to tensor_parallel
                     k_weight = dup_kv_weight(k_weight, num_key_value_heads,
                                              tensor_parallel)
@@ -831,9 +850,10 @@ def convert_hf_qwen(hf_model,
         else:
             weights.update(
                 get_tllm_linear_weight(qkv_w, tllm_prex + 'attention.qkv.',
-                                       qkv_b, use_weight_only,
-                                       plugin_weight_only_quant_type, dtype,
-                                       use_gemm_woq_plugin))
+                                    qkv_b, use_weight_only,
+                                    plugin_weight_only_quant_type, dtype,
+                                    use_gemm_woq_plugin))
+
 
         if int8_kv_cache:
             if qwen_type == 'qwen':
@@ -1247,7 +1267,8 @@ def load_weights_from_hf_model(hf_model,
         act_range=act_range,
         qkv_para=qkv_para,
         smoother=smoother,
-        moe_config=moe_config)
+        moe_config=moe_config,
+        qwen_config=config)
     return weights
 
 
@@ -1337,22 +1358,21 @@ def load_weights_from_hf_gptq_model(hf_model, config: QWenConfig):
 
     # Load weights from GPTQ checkpoint into TRT-LLM module
     # 1. vocab_embedding
-    print(model_params.keys())
     print('Modified in', __file__)
     # v = model_params[key_list[7] + '.weight']
-    v = model_params['language_model.' + key_list[7] + '.weight']
+    v = model_params[internvl_prefix + key_list[7] + '.weight']
     if mapping.is_first_pp_rank():
         weights['transformer.vocab_embedding.weight'] = v.to(torch_dtype)
 
     # 2. ln_f
     # v = model_params[key_list[8] + '.weight']
-    v = model_params['language_model.' + key_list[8] + '.weight']
+    v = model_params[internvl_prefix + key_list[8] + '.weight']
     if mapping.is_last_pp_rank():
         weights['transformer.ln_f.weight'] = v.to(torch_dtype)
 
     # 3. lm_head
     # v = model_params['lm_head.weight']
-    v = model_params['language_model.lm_head.weight']
+    v = model_params[f'{internvl_prefix}lm_head.weight']
     if mapping.is_last_pp_rank():
         weights['lm_head.weight'] = torch_split(v, 0).to(torch_dtype)
 
@@ -1383,7 +1403,7 @@ def load_weights_from_hf_gptq_model(hf_model, config: QWenConfig):
             for suf in suffixs:
                 qkv_list = []
                 for comp in ["q_proj", "k_proj", "v_proj"]:
-                    comp_part = model_params[prefix + key_list[0] + comp + suf]
+                    comp_part = model_params[internvl_prefix + prefix + key_list[0] + comp + suf]
                     comp_part = torch_split(comp_part, 1)
                     qkv_list.append(comp_part)
                 qkv_weight_list.append(torch.cat(qkv_list, dim=1))
