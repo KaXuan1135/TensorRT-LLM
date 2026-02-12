@@ -20,7 +20,7 @@ from .generation import (ChatGLMGenerationSession, GenerationSession,
                          StoppingCriteriaList, decode_words_list)
 from .kv_cache_manager import GenerationSequence, KVCacheManager
 from .model_runner import ModelRunner
-from .multimodal_model_runner import MultimodalModelRunner
+from .multimodal_model_runner import MultimodalModelRunner, InternVLRunner
 from .session import Session, TensorInfo
 
 try:

@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import math
 from io import BytesIO
 
 import requests
@@ -22,88 +23,6 @@ from ..logger import logger
 from .enc_dec_model_runner import EncDecModelRunner
 from .model_runner import ModelRunner
 from .session import Session, TensorInfo
-
-
-
-import torchvision.transforms as T
-from torchvision.transforms.functional import InterpolationMode
-
-IMAGENET_MEAN = (0.485, 0.456, 0.406)
-IMAGENET_STD = (0.229, 0.224, 0.225)
-
-def build_transform(input_size):
-    MEAN, STD = IMAGENET_MEAN, IMAGENET_STD
-    transform = T.Compose([
-        T.Lambda(lambda img: img.convert('RGB') if img.mode != 'RGB' else img),
-        T.Resize((input_size, input_size), interpolation=InterpolationMode.BICUBIC),
-        T.ToTensor(),
-        T.Normalize(mean=MEAN, std=STD)
-    ])
-    return transform
-
-def find_closest_aspect_ratio(aspect_ratio, target_ratios, width, height, image_size):
-    best_ratio_diff = float('inf')
-    best_ratio = (1, 1)
-    area = width * height
-    for ratio in target_ratios:
-        target_aspect_ratio = ratio[0] / ratio[1]
-        ratio_diff = abs(aspect_ratio - target_aspect_ratio)
-        if ratio_diff < best_ratio_diff:
-            best_ratio_diff = ratio_diff
-            best_ratio = ratio
-        elif ratio_diff == best_ratio_diff:
-            if area > 0.5 * image_size * image_size * ratio[0] * ratio[1]:
-                best_ratio = ratio
-    return best_ratio
-
-def dynamic_preprocess(image, min_num=1, max_num=12, image_size=448, use_thumbnail=False):
-    orig_width, orig_height = image.size
-    aspect_ratio = orig_width / orig_height
-
-    # calculate the existing image aspect ratio
-    target_ratios = set(
-        (i, j) for n in range(min_num, max_num + 1) for i in range(1, n + 1) for j in range(1, n + 1) if
-        i * j <= max_num and i * j >= min_num)
-    target_ratios = sorted(target_ratios, key=lambda x: x[0] * x[1])
-
-    # find the closest aspect ratio to the target
-    target_aspect_ratio = find_closest_aspect_ratio(
-        aspect_ratio, target_ratios, orig_width, orig_height, image_size)
-
-    # calculate the target width and height
-    target_width = image_size * target_aspect_ratio[0]
-    target_height = image_size * target_aspect_ratio[1]
-    blocks = target_aspect_ratio[0] * target_aspect_ratio[1]
-
-    # resize the image
-    resized_img = image.resize((target_width, target_height))
-    processed_images = []
-    for i in range(blocks):
-        box = (
-            (i % (target_width // image_size)) * image_size,
-            (i // (target_width // image_size)) * image_size,
-            ((i % (target_width // image_size)) + 1) * image_size,
-            ((i // (target_width // image_size)) + 1) * image_size
-        )
-        # split the image
-        split_img = resized_img.crop(box)
-        processed_images.append(split_img)
-    assert len(processed_images) == blocks
-    if use_thumbnail and len(processed_images) != 1:
-        thumbnail_img = image.resize((image_size, image_size))
-        processed_images.append(thumbnail_img)
-    return processed_images
-
-def load_image(image, input_size=448, max_num=12):
-    # image = Image.open(image_file).convert('RGB')
-    transform = build_transform(input_size=input_size)
-    images = dynamic_preprocess(image, image_size=input_size, use_thumbnail=True, max_num=max_num)
-    pixel_values = [transform(image) for image in images]
-    pixel_values = torch.stack(pixel_values)
-    return pixel_values
-
-
-
 
 class LlavaNextUtils:
     # https://github.com/haotian-liu/LLaVA/blob/main/llava/mm_utils.py
@@ -227,7 +146,6 @@ class LlavaNextUtils:
         image_feature = image_feature.flatten(1, 2).transpose(0, 1)
         image_feature = torch.cat((base_image_feature, image_feature), dim=0)
         return image_feature
-
 
 class MultimodalModelRunner:
 
@@ -949,6 +867,10 @@ class MultimodalModelRunner:
         return image
 
     def setup_inputs(self, input_text, raw_image):
+
+        if isinstance(raw_image, list):
+            assert self.model_type == 'internvl'
+
         from torchvision import transforms
         attention_mask = None
         if 'blip2' in self.model_type:
@@ -1143,10 +1065,9 @@ class MultimodalModelRunner:
                                                       trust_remote_code=True,
                                                       fix_mistral_regex=True)
 
-            image = load_image(
-                raw_image,
-                max_num=2
-            )
+            image = torch.cat([
+                load_image(img, max_num=2) for img in raw_image
+            ], dim=0)
 
         # Repeat inputs to match batch size
         pre_prompt = [pre_prompt] * self.args.batch_size
@@ -1189,6 +1110,363 @@ class MultimodalModelRunner:
         output_text = self.generate(pre_prompt,
                                     post_prompt,
                                     processed_image,
+                                    decoder_input_ids,
+                                    max_new_tokens,
+                                    attention_mask=attention_mask,
+                                    warmup=False)
+
+        return input_text, output_text
+
+import torchvision.transforms as T
+from torchvision.transforms.functional import InterpolationMode
+from torch.nn.utils.rnn import pad_sequence
+
+IMAGENET_MEAN = (0.485, 0.456, 0.406)
+IMAGENET_STD = (0.229, 0.224, 0.225)
+
+def build_transform(input_size):
+    MEAN, STD = IMAGENET_MEAN, IMAGENET_STD
+    transform = T.Compose([
+        T.Lambda(lambda img: img.convert('RGB') if img.mode != 'RGB' else img),
+        T.Resize((input_size, input_size), interpolation=InterpolationMode.BICUBIC),
+        T.ToTensor(),
+        T.Normalize(mean=MEAN, std=STD)
+    ])
+    return transform
+
+def find_closest_aspect_ratio(aspect_ratio, target_ratios, width, height, image_size):
+    best_ratio_diff = float('inf')
+    best_ratio = (1, 1)
+    area = width * height
+    for ratio in target_ratios:
+        target_aspect_ratio = ratio[0] / ratio[1]
+        ratio_diff = abs(aspect_ratio - target_aspect_ratio)
+        if ratio_diff < best_ratio_diff:
+            best_ratio_diff = ratio_diff
+            best_ratio = ratio
+        elif ratio_diff == best_ratio_diff:
+            if area > 0.5 * image_size * image_size * ratio[0] * ratio[1]:
+                best_ratio = ratio
+    return best_ratio
+
+def dynamic_preprocess(image, min_num=1, max_num=12, image_size=448, use_thumbnail=False):
+    orig_width, orig_height = image.size
+    aspect_ratio = orig_width / orig_height
+
+    # calculate the existing image aspect ratio
+    target_ratios = set(
+        (i, j) for n in range(min_num, max_num + 1) for i in range(1, n + 1) for j in range(1, n + 1) if
+        i * j <= max_num and i * j >= min_num)
+    target_ratios = sorted(target_ratios, key=lambda x: x[0] * x[1])
+
+    # find the closest aspect ratio to the target
+    target_aspect_ratio = find_closest_aspect_ratio(
+        aspect_ratio, target_ratios, orig_width, orig_height, image_size)
+
+    # calculate the target width and height
+    target_width = image_size * target_aspect_ratio[0]
+    target_height = image_size * target_aspect_ratio[1]
+    blocks = target_aspect_ratio[0] * target_aspect_ratio[1]
+
+    # resize the image
+    resized_img = image.resize((target_width, target_height))
+    processed_images = []
+    for i in range(blocks):
+        box = (
+            (i % (target_width // image_size)) * image_size,
+            (i // (target_width // image_size)) * image_size,
+            ((i % (target_width // image_size)) + 1) * image_size,
+            ((i // (target_width // image_size)) + 1) * image_size
+        )
+        # split the image
+        split_img = resized_img.crop(box)
+        processed_images.append(split_img)
+    assert len(processed_images) == blocks
+    if use_thumbnail and len(processed_images) != 1:
+        thumbnail_img = image.resize((image_size, image_size))
+        processed_images.append(thumbnail_img)
+    return processed_images
+
+def load_image(image, input_size=448, max_num=12):
+    # image = Image.open(image_file).convert('RGB')
+    transform = build_transform(input_size=input_size)
+    images = dynamic_preprocess(image, image_size=input_size, use_thumbnail=True, max_num=max_num)
+    pixel_values = [transform(image) for image in images]
+    pixel_values = torch.stack(pixel_values)
+    return pixel_values
+
+class InternVLRunner(MultimodalModelRunner):
+    def __init__(self, args):
+        super().__init__(args)
+        assert self.model_type == 'internvl'
+
+        with open(os.path.join(self.args.visual_engine_dir, "config.json"),
+                  "r") as f:
+            config = json.load(f)
+
+        self.max_num_frames = config['builder_config']['max_num_frames']
+        self.vis_batch_size = config['builder_config']['vis_batch_size']
+        
+    def setup_inputs(self, input_text, raw_images):
+
+        # The images token will be insert between pre_prompt and post_prompt
+        images = []
+        for raw_imgs in raw_images:
+            images.append(torch.cat([
+                load_image(img, max_num=1).to(self.device) for img in raw_imgs
+            ], dim=0))
+
+        system_prompt = '你是由上海人工智能实验室联合商汤科技开发的书生多模态大模型, 英文名叫InternVL, 是一个有用无害的人工智能助手。'
+        system_part = f"<|im_start|>system\n{system_prompt}<|im_end|>\n"
+        user_start = f"<|im_start|>user\n"
+
+        pre_prompt = system_part + user_start
+        pre_prompt = [pre_prompt] * self.args.batch_size
+
+        assert len(input_text) == self.args.batch_size
+        post_prompt = [f"\n{txt}<|im_end|>\n<|im_start|>assistant\n" for txt in input_text]
+
+        decoder_input_ids = None
+        attention_mask = None
+
+        return input_text, pre_prompt, post_prompt, images, decoder_input_ids, attention_mask
+
+    def ptuning_setup(self, prompt_table, input_ids, input_lengths):
+
+        hidden_size = self.model_config.hidden_size * self.runtime_mapping.tp_size
+    
+        batch_size = prompt_table.shape[0]
+        tokens_per_item = prompt_table.shape[1]
+
+        task_vocab_size = torch.tensor(
+            [tokens_per_item] * self.args.batch_size, # Create [256, 256] instead of just [256]
+            dtype=torch.int32,
+        ).cuda()
+
+        # Flatten back for the final return if your generate() call expects 2D
+        prompt_table = prompt_table.view(-1, hidden_size).contiguous()
+        prompt_table = prompt_table.cuda().to(dtype=str_dtype_to_torch(self.model_config.dtype))
+
+        tasks = torch.zeros(input_ids.shape, dtype=torch.int32).cuda()
+        return [prompt_table, tasks, task_vocab_size]
+
+    def images_preprocess(
+        self, warmup, pre_prompt, post_prompt, images, attention_mask
+    ):
+        assert self.model_type == 'internvl'
+        assert post_prompt[0] is not None
+
+        image_prefix = 'Frame-$N$'
+        image_prefix = 'Image-$N$: '
+        image_postfix = '\n'
+
+        if not warmup:
+            profiler.start("Vision")
+
+        imgs_per_batch = [img.shape[0] for img in images]
+        combined_images = torch.cat(images, dim=0)
+
+        # visual_features, visual_atts = self.get_visual_features(combined_images, attention_mask)
+        visual_features_list, visual_atts_list = [], []
+        for split_img in torch.split(combined_images, self.vis_batch_size, dim=0):
+            v_feat, v_att = self.get_visual_features(split_img, attention_mask)
+            
+            visual_features_list.append(v_feat)
+            visual_atts_list.append(v_att)
+
+        visual_features, visual_atts = torch.cat(visual_features_list, dim=0), torch.cat(visual_atts_list, dim=0)
+
+        if not warmup:
+            profiler.stop("Vision")
+
+        batch_visual_features = []
+        current_offset = 0
+
+        for num_images in imgs_per_batch:
+            request_visuals = visual_features[current_offset : current_offset + num_images]
+            batch_visual_features.append(request_visuals)
+            current_offset += num_images
+
+        img_prefix_inputs_ids = [[
+            self.tokenizer(
+                image_prefix.replace('$N$', str(i + 1)), 
+                return_tensors="pt", 
+                add_special_tokens=False
+            ).input_ids
+            for i in range(images[batch].shape[0])
+        ] for batch in range(self.args.batch_size)]
+
+        img_postfix_inputs_ids = [[
+            self.tokenizer(
+                image_postfix, 
+                return_tensors="pt", 
+                add_special_tokens=False
+            ).input_ids
+            for i in range(images[batch].shape[0])
+        ] for batch in range(self.args.batch_size)]
+
+
+        input_ids, batch_infos, ptuning_args = self.setup_fake_prompts_images(
+            batch_visual_features, img_prefix_inputs_ids, img_postfix_inputs_ids, pre_prompt, post_prompt)
+
+        print("\n" + "="*50)
+        print(f"       BATCH REQUEST SUMMARY (Size: {self.args.batch_size})")
+        print(f"   Config: {self.max_num_frames} frames | {self.max_num_frames * 256} visual tokens")
+        print("="*50)
+
+        for b, info in enumerate(batch_infos):
+            print(f"[Batch {b}]")
+            print(f"  ├─ Prompt/Question Tokens : {info['prompt_and_question']}")
+            print(f"  └─ Image Prefix Tokens    : {info['image_prefix']}")
+            print(f"  └─ Image Postfix Tokens    : {info['image_postfix']}")
+        
+        print("="*50 + "\n")
+        return input_ids, ptuning_args, batch_visual_features
+
+    def setup_fake_prompts_images(self, batch_visual_features, img_prefix_inputs_ids, img_postfix_inputs_ids,
+                                  pre_prompts, post_prompts):
+
+        ids_to_cat_overall = []
+        current_fake_id = self.model_config.vocab_size 
+        batch_infos = []
+        for batch in range(self.args.batch_size):
+            
+            ids_to_cat = [
+                self.tokenizer(pre_prompts[batch], return_tensors="pt").input_ids.squeeze()
+            ]
+
+            batch_info = {'prompt_and_question': len(ids_to_cat[-1])}
+            
+            for i in range(batch_visual_features[batch].shape[0]):
+
+                ids_to_cat.append(img_prefix_inputs_ids[batch][i][0])
+                batch_info['image_prefix'] = batch_info.get('image_prefix', 0) + len(ids_to_cat[-1])
+
+                num_patches = batch_visual_features[batch][i].shape[0]
+
+                frame_fake_ids = torch.arange(
+                    current_fake_id, 
+                    current_fake_id + num_patches
+                ).to(torch.int32)
+                
+                ids_to_cat.append(frame_fake_ids)
+                current_fake_id += num_patches
+                ids_to_cat.append(img_postfix_inputs_ids[batch][i][0])
+                batch_info['image_postfix'] = batch_info.get('image_postfix', 0) + len(ids_to_cat[-1])
+
+            ids_to_cat.append(
+                self.tokenizer(post_prompts[batch], return_tensors="pt").input_ids.squeeze()
+            )
+            batch_info['prompt_and_question'] += len(ids_to_cat[-1])
+            
+            input_ids = torch.cat(ids_to_cat).contiguous().to(torch.int32)
+            ids_to_cat_overall.append(input_ids)
+            batch_infos.append(batch_info)
+
+        total_visual_features = torch.cat(batch_visual_features, dim=0)
+
+        input_lengths = torch.tensor([ids.size(0) for ids in ids_to_cat_overall], dtype=torch.int32)
+
+        padded_batch = pad_sequence(
+            [seq.flip(0) for seq in ids_to_cat_overall], 
+            batch_first=True, 
+            padding_value=self.tokenizer.pad_token_id
+        )
+        ids_to_cat_overall = padded_batch.flip(1).contiguous().to(torch.int32)
+
+        ptuning_args = self.ptuning_setup(total_visual_features, ids_to_cat_overall, input_lengths)
+
+        return ids_to_cat_overall, batch_infos, ptuning_args
+
+    def generate(self,
+                 pre_prompt,
+                 post_prompt,
+                 images,
+                 decoder_input_ids,
+                 max_new_tokens,
+                 attention_mask,
+                 warmup=False):
+        if not warmup:
+            profiler.start("Generate")
+
+        input_ids, ptuning_args, visual_features = self.images_preprocess(
+            warmup, pre_prompt, post_prompt, images, attention_mask)
+
+        if warmup: return None
+
+        end_id = self.tokenizer.eos_token_id
+        ptuning_args[0] = torch.stack([ptuning_args[0]])
+
+        profiler.start("LLM")
+        output_ids = self.model.generate(
+            input_ids,
+            sampling_config=None,
+            prompt_table=ptuning_args[0],
+            tasks=ptuning_args[1],
+            task_vocab_size=ptuning_args[2],
+            max_new_tokens=max_new_tokens,
+            end_id=end_id,
+            pad_id=self.tokenizer.pad_token_id
+            if self.tokenizer.pad_token_id is not None else
+            self.tokenizer.all_special_ids[0],
+            top_k=self.args.top_k,
+            top_p=self.args.top_p,
+            temperature=self.args.temperature,
+            repetition_penalty=self.args.repetition_penalty,
+            num_beams=self.args.num_beams,
+            output_sequence_lengths=False,
+            return_dict=False)
+        profiler.stop("LLM")
+
+        # Extract a list of tensors of shape beam_width x output_ids.
+        output_beams_list = [
+            self.tokenizer.batch_decode(
+                output_ids[batch_idx, :, input_ids.shape[1]:],
+                skip_special_tokens=True)
+            for batch_idx in range(self.args.batch_size)
+        ]
+
+        stripped_text = [[
+            output_beams_list[batch_idx][beam_idx].strip()
+            for beam_idx in range(self.args.num_beams)
+        ] for batch_idx in range(self.args.batch_size)]
+        profiler.stop("Generate")
+
+        profiler.start("TTFT")
+        self.model.generate(
+            input_ids,
+            sampling_config=None,
+            prompt_table=ptuning_args[0],
+            tasks=ptuning_args[1],
+            task_vocab_size=ptuning_args[2],
+            max_new_tokens=1,
+            end_id=end_id,
+            pad_id=self.tokenizer.pad_token_id
+            if self.tokenizer.pad_token_id is not None else
+            self.tokenizer.all_special_ids[0],
+            top_k=self.args.top_k,
+            top_p=self.args.top_p,
+            temperature=self.args.temperature,
+            repetition_penalty=self.args.repetition_penalty,
+            num_beams=self.args.num_beams,
+            output_sequence_lengths=False,
+            return_dict=False)
+        profiler.stop("TTFT")
+
+        return stripped_text
+
+    def run(self, input_text, image_paths, max_new_tokens):
+
+        input_images = []
+        for image_pths in image_paths:
+            input_images.append([Image.open(img_path).convert("RGB") for img_path in image_pths])
+
+        input_text, pre_prompt, post_prompt, processed_images, decoder_input_ids, attention_mask = self.setup_inputs(
+            input_text, input_images)
+
+        output_text = self.generate(pre_prompt,
+                                    post_prompt,
+                                    processed_images,
                                     decoder_input_ids,
                                     max_new_tokens,
                                     attention_mask=attention_mask,
