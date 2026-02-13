@@ -1196,9 +1196,12 @@ def load_image(image, input_size=448, max_num=12):
     return pixel_values
 
 class InternVLRunner(MultimodalModelRunner):
-    def __init__(self, args):
+    def __init__(self, args, system_prompt, image_prefix, image_postfix):
         super().__init__(args)
         assert self.model_type == 'internvl'
+        self.system_prompt = system_prompt
+        self.image_prefix = image_prefix
+        self.image_postfix = image_postfix
 
         with open(os.path.join(self.args.visual_engine_dir, "config.json"),
                   "r") as f:
@@ -1216,8 +1219,7 @@ class InternVLRunner(MultimodalModelRunner):
                 load_image(img, max_num=1).to(self.device) for img in raw_imgs
             ], dim=0))
 
-        system_prompt = '你是由上海人工智能实验室联合商汤科技开发的书生多模态大模型, 英文名叫InternVL, 是一个有用无害的人工智能助手。'
-        system_part = f"<|im_start|>system\n{system_prompt}<|im_end|>\n"
+        system_part = f"<|im_start|>system\n{self.system_prompt}<|im_end|>\n"
         user_start = f"<|im_start|>user\n"
 
         pre_prompt = system_part + user_start
@@ -1256,10 +1258,6 @@ class InternVLRunner(MultimodalModelRunner):
         assert self.model_type == 'internvl'
         assert post_prompt[0] is not None
 
-        image_prefix = 'Frame-$N$'
-        image_prefix = 'Image-$N$: '
-        image_postfix = '\n'
-
         if not warmup:
             profiler.start("Vision")
 
@@ -1289,7 +1287,7 @@ class InternVLRunner(MultimodalModelRunner):
 
         img_prefix_inputs_ids = [[
             self.tokenizer(
-                image_prefix.replace('$N$', str(i + 1)), 
+                self.image_prefix.replace('$N$', str(i + 1)), 
                 return_tensors="pt", 
                 add_special_tokens=False
             ).input_ids
@@ -1298,7 +1296,7 @@ class InternVLRunner(MultimodalModelRunner):
 
         img_postfix_inputs_ids = [[
             self.tokenizer(
-                image_postfix, 
+                self.image_postfix, 
                 return_tensors="pt", 
                 add_special_tokens=False
             ).input_ids
