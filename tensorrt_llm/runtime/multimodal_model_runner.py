@@ -1188,7 +1188,6 @@ def dynamic_preprocess(image, min_num=1, max_num=12, image_size=448, use_thumbna
     return processed_images
 
 def load_image(image, input_size=448, max_num=12):
-    # image = Image.open(image_file).convert('RGB')
     transform = build_transform(input_size=input_size)
     images = dynamic_preprocess(image, image_size=input_size, use_thumbnail=True, max_num=max_num)
     pixel_values = [transform(image) for image in images]
@@ -1205,11 +1204,17 @@ class InternVLRunner(MultimodalModelRunner):
 
         with open(os.path.join(self.args.visual_engine_dir, "config.json"),
                   "r") as f:
-            config = json.load(f)
+            vis_config = json.load(f)
 
-        self.max_num_frames = config['builder_config']['max_num_frames']
-        self.vis_batch_size = config['builder_config']['vis_batch_size']
+        self.max_num_frames = vis_config['builder_config']['max_num_frames']
+        self.vis_batch_size = vis_config['builder_config']['vis_batch_size']
         
+        with open(os.path.join(self.args.llm_engine_dir, "config.json"),
+                  "r") as f:
+            llm_config = json.load(f)
+
+        assert not llm_config['build_config']['plugin_config']['remove_input_padding'], 'you should set this to off, for using python multimodal runner, only set it to on for cpp runner'
+
     def setup_inputs(self, input_text, raw_images):
 
         # The images token will be insert between pre_prompt and post_prompt
@@ -1225,7 +1230,7 @@ class InternVLRunner(MultimodalModelRunner):
         pre_prompt = system_part + user_start
         pre_prompt = [pre_prompt] * self.args.batch_size
 
-        assert len(input_text) == self.args.batch_size
+        assert len(input_text) == self.args.batch_size, f'len(input_text) ({len(input_text)}) should equal to model batch size ({self.args.batch_size})'
         post_prompt = [f"\n{txt}<|im_end|>\n<|im_start|>assistant\n" for txt in input_text]
 
         decoder_input_ids = None
@@ -1268,7 +1273,6 @@ class InternVLRunner(MultimodalModelRunner):
         visual_features_list, visual_atts_list = [], []
         for split_img in torch.split(combined_images, self.vis_batch_size, dim=0):
             v_feat, v_att = self.get_visual_features(split_img, attention_mask)
-            
             visual_features_list.append(v_feat)
             visual_atts_list.append(v_att)
 
@@ -1302,7 +1306,6 @@ class InternVLRunner(MultimodalModelRunner):
             ).input_ids
             for i in range(images[batch].shape[0])
         ] for batch in range(self.args.batch_size)]
-
 
         input_ids, batch_infos, ptuning_args = self.setup_fake_prompts_images(
             batch_visual_features, img_prefix_inputs_ids, img_postfix_inputs_ids, pre_prompt, post_prompt)
@@ -1428,6 +1431,7 @@ class InternVLRunner(MultimodalModelRunner):
             output_beams_list[batch_idx][beam_idx].strip()
             for beam_idx in range(self.args.num_beams)
         ] for batch_idx in range(self.args.batch_size)]
+
         profiler.stop("Generate")
 
         profiler.start("TTFT")
@@ -1470,4 +1474,4 @@ class InternVLRunner(MultimodalModelRunner):
                                     attention_mask=attention_mask,
                                     warmup=False)
 
-        return input_text, output_text
+        return output_text
